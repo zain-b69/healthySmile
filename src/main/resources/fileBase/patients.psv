@@ -1,0 +1,5 @@
+ID|Nom|Prenom|Adresse|Telephone|Email|DateNaissance|DateCreation|Sexe|Assurance
+1|Amal|Z.|Rabat|0611-111111|amal@example.com|1995-05-12|2025-10-25T21:35:39|Femme|CNSS
+2|Omar|B.|Salé|0622-222222|hassan@example.com|1989-09-23|2025-10-25T20:40:39|Homme|CNOPS
+3|Nour|C.|Témara|0633-333333|nour@example.com|2000-02-02|2025-10-24T21:10:39|Femme|Autre
+4|Youssef|D.|Kénitra|0644-444444|youssef@example.com|1992-11-01|2025-10-23T21:40:39|Homme|Aucune
