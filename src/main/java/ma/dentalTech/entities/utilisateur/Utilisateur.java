@@ -1,14 +1,16 @@
 package ma.dentalTech.entities.utilisateur;
 
+import ma.dentalTech.entities.role.Role;
+
 public class Utilisateur {
     private Long id;
     private String username;
     private String email;
     private String passwordHash;
-    private String role;
+    private Role role;
 
     public Utilisateur() {}
-    public Utilisateur(Long id, String username, String email, String passwordHash, String role) {
+    public Utilisateur(Long id, String username, String email, String passwordHash, Role role) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -31,7 +33,7 @@ public class Utilisateur {
 
         public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
-        public String getRole() { return role; }
+        public Role getRole() { return role; }
 
-        public void setRole(String role) { this.role = role; }
+        public void setRole(Role role) { this.role = role; }
 }

@@ -54,4 +54,5 @@ public class PatientChat {
         public String getInsurance() { return insurance; }
 
         public void setInsurance(String insurance) { this.insurance = insurance; }
+
 }

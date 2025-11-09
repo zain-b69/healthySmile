@@ -13,6 +13,7 @@ import ma.dentalTech.entities.enums.Sexe;
 public class Patient {
 
     private Long id;
+    private Long idEntite;
     private String nom;
     private String prenom;
     private String adresse;
@@ -24,4 +25,11 @@ public class Patient {
     private Assurance assurance;
 
 
+    public void setIdEntite(Long idEntite) {
+        this.idEntite = idEntite;
+    }
+
+    public LocalDate getDateDeNaissance() {
+        return dateNaissance;
+    }
 }

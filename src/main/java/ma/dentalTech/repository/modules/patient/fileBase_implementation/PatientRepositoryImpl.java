@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -221,5 +222,10 @@ public class PatientRepositoryImpl implements PatientRepository {
     private String capitalize(String s) {
         if (s.isEmpty()) return s;
         return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+    }
+
+    @Override
+    public Patient save(Patient patient) throws SQLException, SQLException {
+        return null;
     }
 }
