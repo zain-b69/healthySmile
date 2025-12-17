@@ -17,6 +17,7 @@ import ma.dentalTech.entities.enums.TypeNotification;
 @Builder
 public class Notification extends BaseEntity {
 
+    private Long idNotification; // PK notification.id_notification
     private TitreNotification titre;
     private String message;
     private LocalDate date;
