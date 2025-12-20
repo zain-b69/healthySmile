@@ -1,80 +1,102 @@
 package ma.dentalTech.configuration;
 
+import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.repository.modules.patient.api.AntecedentRepository;
+import ma.dentalTech.repository.modules.patient.api.PatientRepository;
+import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
+import ma.dentalTech.service.modules.patient.api.PatientService;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
-import ma.dentalTech.repository.modules.patient.api.PatientRepository;
-import ma.dentalTech.service.modules.patient.api.PatientService;
 
-// Fabrique
-public class ApplicationContext {
+public final class ApplicationContext {
 
-    private static final Map<Class<?>, Object> context       = new HashMap<>();
-    private static final Map<String, Object>   contextByName = new HashMap<>(); // Ajout d'une deuxième map
+    private static final Map<Class<?>, Object> context = new HashMap<>();
+    private static final Map<String, Object> contextByName = new HashMap<>();
 
     static {
-        var configFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("config/beans.properties");
+        try {
+            var configFile = Thread.currentThread()
+                    .getContextClassLoader()
+                    .getResourceAsStream("config/beans.properties");
 
-        if (configFile != null) {
-            Properties properties = new Properties();
-            try {
-                properties.load(configFile);
-                String daoClassName = properties.getProperty("patientRepo");
-                String servClassName = properties.getProperty("patientService");
-                String ctrlClassName = properties.getProperty("patientController");
-
-                Class<?> cRepository = Class.forName(daoClassName);
-                PatientRepository repository = (PatientRepository) cRepository.getDeclaredConstructor().newInstance();
-
-                Class<?> cService = Class.forName(servClassName);
-                PatientService service = (PatientService) cService.getDeclaredConstructor(PatientRepository.class).newInstance(repository);
-
-                Class<?> cController = Class.forName(ctrlClassName);
-                PatientController controller = (PatientController) cController.getDeclaredConstructor(PatientService.class).newInstance(service);
-
-
-                // Stockage des beans dans le contexte
-                context.put(PatientRepository.class, repository);
-                context.put(PatientService.class, service);
-                context.put(PatientController.class, controller);
-
-                // Enregistrement des beans aussi avec des noms explicites
-                contextByName.put("patientDao", repository);
-                contextByName.put("patientService", service);
-                contextByName.put("patientController", controller);
-
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (configFile == null) {
+                throw new IllegalStateException("Erreur : config/beans.properties introuvable");
             }
-        } else {
-            System.err.println("Erreur : Le fichier beans.properties est introuvable !");
+
+            Properties props = new Properties();
+            props.load(configFile);
+
+            // ---- Required keys (si ton prof l’exige) ----
+            String patientRepoClass = props.getProperty("patientRepo");
+            String patientServiceClass = props.getProperty("patientService");
+            String patientControllerClass = props.getProperty("patientController");
+
+            if (patientRepoClass == null || patientServiceClass == null || patientControllerClass == null) {
+                throw new IllegalStateException("beans.properties doit contenir: patientRepo, patientService, patientController");
+            }
+
+            // ---- Optional repos for your tests ----
+            String antecedentRepoClass = props.getProperty("antecedentRepo");
+            String utilisateurRepoClass = props.getProperty("utilisateurRepo");
+
+            // ---- Instantiate PatientRepository ----
+            PatientRepository patientRepo = (PatientRepository) Class.forName(patientRepoClass)
+                    .getDeclaredConstructor()
+                    .newInstance();
+
+            context.put(PatientRepository.class, patientRepo);
+            contextByName.put("patientRepo", patientRepo);
+
+            // ---- Instantiate AntecedentRepository (optional but needed for your test) ----
+            if (antecedentRepoClass != null && !antecedentRepoClass.isBlank()) {
+                AntecedentRepository antecedentRepo = (AntecedentRepository) Class.forName(antecedentRepoClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                context.put(AntecedentRepository.class, antecedentRepo);
+                contextByName.put("antecedentRepo", antecedentRepo);
+            }
+
+            // ---- Instantiate UtilisateurRepository (optional but needed for auth test) ----
+            if (utilisateurRepoClass != null && !utilisateurRepoClass.isBlank()) {
+                UtilisateurRepository utilisateurRepo = (UtilisateurRepository) Class.forName(utilisateurRepoClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                context.put(UtilisateurRepository.class, utilisateurRepo);
+                contextByName.put("utilisateurRepo", utilisateurRepo);
+            }
+
+            // ---- Instantiate PatientService ----
+            PatientService patientService = (PatientService) Class.forName(patientServiceClass)
+                    .getDeclaredConstructor(PatientRepository.class)
+                    .newInstance(patientRepo);
+
+            context.put(PatientService.class, patientService);
+            contextByName.put("patientService", patientService);
+
+            // ---- Instantiate PatientController ----
+            PatientController patientController = (PatientController) Class.forName(patientControllerClass)
+                    .getDeclaredConstructor(PatientService.class)
+                    .newInstance(patientService);
+
+            context.put(PatientController.class, patientController);
+            contextByName.put("patientController", patientController);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur d'initialisation ApplicationContext", e);
         }
     }
 
-    /**
-     * Retourne un composant bean en fonction de son nom (String).
-     */
     public static Object getBean(String beanName) {
         return contextByName.get(beanName);
     }
 
-    /**
-     * Retourne un composant bean en fonction de sa classe.
-     */
     public static <T> T getBean(Class<T> beanClass) {
         return beanClass.cast(context.get(beanClass));
     }
 
-
+    private ApplicationContext() {}
 }
-
-
-
-
-
-
-
-
-

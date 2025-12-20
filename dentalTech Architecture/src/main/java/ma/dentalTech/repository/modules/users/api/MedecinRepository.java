@@ -1,6 +1,5 @@
 package ma.dentalTech.repository.modules.users.api;
 
-
 import ma.dentalTech.entities.users.Medecin;
 import ma.dentalTech.repository.common.CrudRepository;
 
@@ -11,4 +10,3 @@ public interface MedecinRepository extends CrudRepository<Medecin, Long> {
     List<Medecin> findAllOrderByNom();
     List<Medecin> findBySpecialite(String specialiteLike);
 }
-

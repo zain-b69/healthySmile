@@ -1,5 +1,6 @@
 package ma.dentalTech.repository.modules.cabinet.api;
 
+import ma.dentalTech.entities.cabinet.CabinetMedical;
 import ma.dentalTech.entities.cabinet.Charges;
 import ma.dentalTech.repository.common.CrudRepository;
 
@@ -19,4 +20,7 @@ public interface ChargesRepository extends CrudRepository<Charges, Long> {
     long count();
 
     List<Charges> findPage(int limit, int offset);
+
+    // ---- Relations optionnelles ----
+    CabinetMedical getCabinetOfCharge(Long chargeId);
 }

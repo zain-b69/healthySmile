@@ -16,7 +16,7 @@ public final class RowMappers {
 
     // ===== Helpers =====
 
-    private static void fillAudit(BaseEntity e, ResultSet rs) throws SQLException {
+    public static void fillAudit(BaseEntity e, ResultSet rs) throws SQLException {
         //tous les find…() qui utilisent ces mappers doivent JOIN entite.
         Date dc = rs.getDate("date_creation");
         e.setDateCreation(dc != null ? dc.toLocalDate() : null);
