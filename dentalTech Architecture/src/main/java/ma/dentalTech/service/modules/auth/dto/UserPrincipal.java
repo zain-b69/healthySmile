@@ -6,17 +6,13 @@ import java.io.Serializable;
 import java.security.Principal;
 import java.util.Objects;
 
-/**
- * Représente l'utilisateur authentifié (principal) dans l'application.
- * Sert à transporter l'identité + le rôle après un login réussi.
- */
 public class UserPrincipal implements Principal, Serializable {
 
-    private final Long idUser;      // utilisateur.id_user
-    private final String login;     // utilisateur.login (ou email si tu veux)
-    private final String email;     // utilisateur.email
-    private final String nom;       // utilisateur.nom
-    private final RoleType role;    // role.libelle (ADMIN/MEDECIN/SECRETAIRE/PATIENT)
+    private final Long idUser;
+    private final String login;
+    private final String email;
+    private final String nom;
+    private final RoleType role;
 
     public UserPrincipal(Long idUser, String login, String email, String nom, RoleType role) {
         this.idUser = idUser;
@@ -32,7 +28,6 @@ public class UserPrincipal implements Principal, Serializable {
 
     @Override
     public String getName() {
-        // Principal.getName() -> identifier (souvent login ou email)
         return (login != null && !login.isBlank()) ? login : email;
     }
 

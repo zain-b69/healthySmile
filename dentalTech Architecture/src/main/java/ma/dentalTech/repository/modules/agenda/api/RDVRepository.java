@@ -26,4 +26,6 @@ public interface RDVRepository extends CrudRepository<RDV, Long> {
     boolean existsByCreneau(Long idCreneau);
 
     long count();
+
+    List<RDV> findPage(int limit, int offset);
 }

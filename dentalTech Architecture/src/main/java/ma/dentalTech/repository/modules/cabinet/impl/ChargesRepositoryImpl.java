@@ -17,7 +17,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public List<Charges> findAll() {
-        String sql = "SELECT * FROM Charges ORDER BY date DESC";
+        String sql = "SELECT * FROM charge ORDER BY date_charge DESC";
         List<Charges> out = new ArrayList<>();
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -29,7 +29,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public Charges findById(Long id) {
-        String sql = "SELECT * FROM Charges WHERE id_charge=?";
+        String sql = "SELECT * FROM charge WHERE id_charge=?";
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -43,7 +43,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
     @Override
     public void create(Charges charge) {
         String sql = """
-            INSERT INTO Charges(titre, description, montant, date, id_cabinet)
+            INSERT INTO charge(titre, description, montant, date_charge, id_cabinet)
             VALUES(?,?,?,?,?)
             """;
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -65,8 +65,8 @@ public class ChargesRepositoryImpl implements ChargesRepository {
     @Override
     public void update(Charges charge) {
         String sql = """
-            UPDATE Charges SET
-              titre=?, description=?, montant=?, date=?, id_cabinet=?
+            UPDATE charge SET
+              titre=?, description=?, montant=?, date_charge=?, id_cabinet=?
             WHERE id_charge=?
             """;
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -90,7 +90,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public void deleteById(Long id) {
-        String sql = "DELETE FROM Charges WHERE id_charge=?";
+        String sql = "DELETE FROM charge WHERE id_charge=?";
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -102,7 +102,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public List<Charges> findByCabinet(Long cabinetId) {
-        String sql = "SELECT * FROM Charges WHERE id_cabinet=? ORDER BY date DESC";
+        String sql = "SELECT * FROM charge WHERE id_cabinet=? ORDER BY date_charge DESC";
         List<Charges> out = new ArrayList<>();
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -117,9 +117,9 @@ public class ChargesRepositoryImpl implements ChargesRepository {
     @Override
     public List<Charges> findByCabinetAndDateBetween(Long cabinetId, LocalDateTime start, LocalDateTime end) {
         String sql = """
-            SELECT * FROM Charges
-            WHERE id_cabinet=? AND date BETWEEN ? AND ?
-            ORDER BY date DESC
+            SELECT * FROM charge
+            WHERE id_cabinet=? AND date_charge BETWEEN ? AND ?
+            ORDER BY date_charge DESC
             """;
         List<Charges> out = new ArrayList<>();
         try (Connection c = SessionFactory.getInstance().getConnection();
@@ -138,7 +138,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public List<Charges> findByDateBetween(LocalDateTime start, LocalDateTime end) {
-        String sql = "SELECT * FROM Charges WHERE date BETWEEN ? AND ? ORDER BY date DESC";
+        String sql = "SELECT * FROM charge WHERE date_charge BETWEEN ? AND ? ORDER BY date_charge DESC";
         List<Charges> out = new ArrayList<>();
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -155,7 +155,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public boolean existsById(Long id) {
-        String sql = "SELECT 1 FROM Charges WHERE id_charge=?";
+        String sql = "SELECT 1 FROM charge WHERE id_charge=?";
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -165,7 +165,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public long count() {
-        String sql = "SELECT COUNT(*) FROM Charges";
+        String sql = "SELECT COUNT(*) FROM charge";
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -176,7 +176,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
     @Override
     public List<Charges> findPage(int limit, int offset) {
-        String sql = "SELECT * FROM Charges ORDER BY date DESC LIMIT ? OFFSET ?";
+        String sql = "SELECT * FROM charge ORDER BY date_charge DESC LIMIT ? OFFSET ?";
         List<Charges> out = new ArrayList<>();
         try (Connection c = SessionFactory.getInstance().getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -195,8 +195,8 @@ public class ChargesRepositoryImpl implements ChargesRepository {
     public CabinetMedical getCabinetOfCharge(Long chargeId) {
         String sql = """
             SELECT c.*
-            FROM Cabinets c
-            JOIN Charges ch ON ch.id_cabinet = c.id_cabinet
+            FROM cabinet_medicale c
+            JOIN charge ch ON ch.id_cabinet = c.id_cabinet
             WHERE ch.id_charge=?
             """;
         try (Connection c = SessionFactory.getInstance().getConnection();

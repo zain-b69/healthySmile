@@ -1,9 +1,13 @@
 package ma.dentalTech.configuration;
 
+import ma.dentalTech.mvc.controllers.modules.auth.api.AuthController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.repository.modules.patient.api.AntecedentRepository;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.repository.modules.users.api.UtilisateurRepository;
+import ma.dentalTech.service.modules.auth.api.AuthService;
+import ma.dentalTech.service.modules.auth.api.CredentialsValidator;
+import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
 import ma.dentalTech.service.modules.patient.api.PatientService;
 
 import java.util.HashMap;
@@ -67,6 +71,72 @@ public final class ApplicationContext {
 
                 context.put(UtilisateurRepository.class, utilisateurRepo);
                 contextByName.put("utilisateurRepo", utilisateurRepo);
+            }
+
+            // ---- Optional auth beans ----
+            String passwordEncoderClass = props.getProperty("passwordEncoder");
+            String credentialsValidatorClass = props.getProperty("credentialsValidator");
+            String authServiceClass = props.getProperty("authService");
+            String authControllerClass = props.getProperty("authController");
+
+
+// ---- Instantiate PasswordEncoder ----
+            if (passwordEncoderClass != null && !passwordEncoderClass.isBlank()) {
+                PasswordEncoder encoder = (PasswordEncoder) Class.forName(passwordEncoderClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                context.put(PasswordEncoder.class, encoder);
+                contextByName.put("passwordEncoder", encoder);
+            }
+
+// ---- Instantiate CredentialsValidator ----
+            if (credentialsValidatorClass != null && !credentialsValidatorClass.isBlank()) {
+                CredentialsValidator validator = (CredentialsValidator) Class.forName(credentialsValidatorClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                context.put(CredentialsValidator.class, validator);
+                contextByName.put("credentialsValidator", validator);
+            }
+
+// ---- Instantiate AuthService ----
+            if (authServiceClass != null && !authServiceClass.isBlank()) {
+                UtilisateurRepository utilisateurRepo = getBean(UtilisateurRepository.class);
+                PasswordEncoder encoder = getBean(PasswordEncoder.class);
+                CredentialsValidator validator = getBean(CredentialsValidator.class);
+
+                if (utilisateurRepo == null) {
+                    throw new IllegalStateException("utilisateurRepo bean not found (UtilisateurRepository.class is null)");
+                }
+                if (encoder == null) {
+                    throw new IllegalStateException("passwordEncoder bean not found");
+                }
+                if (validator == null) {
+                    throw new IllegalStateException("credentialsValidator bean not found");
+                }
+
+                AuthService authService = (AuthService) Class.forName(authServiceClass)
+                        .getDeclaredConstructor(UtilisateurRepository.class, PasswordEncoder.class, CredentialsValidator.class)
+                        .newInstance(utilisateurRepo, encoder, validator);
+
+                context.put(AuthService.class, authService);
+                contextByName.put("authService", authService);
+
+            }
+
+            if (authControllerClass != null && !authControllerClass.isBlank()) {
+                AuthService authService = getBean(AuthService.class);
+                if (authService == null) {
+                    throw new IllegalStateException("authService bean not found");
+                }
+
+                AuthController authController = (AuthController) Class.forName(authControllerClass)
+                        .getDeclaredConstructor(AuthService.class)
+                        .newInstance(authService);
+
+                context.put(AuthController.class, authController);
+                contextByName.put("authController", authController);
             }
 
             // ---- Instantiate PatientService ----

@@ -511,4 +511,136 @@ public final class RowMappers {
         return rev;
     }
 
+    // ===== Dossier Medical : Ordonnance =====
+    public static Ordonnance mapOrdonnance(ResultSet rs) throws SQLException {
+        Ordonnance o = new Ordonnance();
+
+        o.setIdOrd(rs.getLong("id_ord"));
+        o.setId(rs.getObject("id_entite", Long.class)); // BaseEntity.id = id_entite
+
+        o.setIdConsultation(rs.getLong("id_consultation"));
+
+        Date d = rs.getDate("date");
+        o.setDate(d != null ? d.toLocalDate() : null);
+
+        o.setIdDm(rs.getLong("id_dm"));
+
+        // audit entite (si JOIN entite)
+        fillAudit(o, rs);
+
+        // lazy objects
+        Consultation c = new Consultation();
+        c.setIdConsultation(o.getIdConsultation());
+        o.setConsultation(c);
+
+        DossierMedical dm = new DossierMedical();
+        dm.setIdDm(o.getIdDm());
+        o.setDossierMedical(dm);
+
+        return o;
+    }
+
+
+    // ===== Dossier Medical : Prescription =====
+    public static Prescription mapPrescription(ResultSet rs) throws SQLException {
+        Prescription p = new Prescription();
+
+        p.setIdPr(rs.getLong("id_pr"));
+        p.setId(rs.getObject("id_entite", Long.class)); // BaseEntity.id = id_entite
+
+        p.setIdOrdonnance(rs.getLong("id_ordonnance"));
+        p.setQuantite(rs.getObject("quantite", Integer.class));
+        p.setCategorie(rs.getString("categorie"));
+        p.setFrequence(rs.getString("frequence"));
+        p.setDureeEnJours(rs.getObject("duree_en_jours", Integer.class));
+
+        // audit entite (si JOIN entite)
+        fillAudit(p, rs);
+
+        Ordonnance o = new Ordonnance();
+        o.setIdOrd(p.getIdOrdonnance());
+        p.setOrdonnance(o);
+
+        return p;
+    }
+
+
+    // ===== Dossier Medical : SituationFinanciere =====
+    public static SituationFinanciere mapSituationFinanciere(ResultSet rs) throws SQLException {
+        SituationFinanciere sf = new SituationFinanciere();
+
+        sf.setIdSf(rs.getLong("id_sf"));
+        sf.setId(rs.getObject("id_entite", Long.class)); // BaseEntity.id = id_entite
+
+        sf.setTotaleDesActes(rs.getObject("totale_des_actes", Double.class));
+        sf.setTotalePaye(rs.getObject("totale_paye", Double.class));
+        sf.setCredit(rs.getObject("credit", Double.class));
+
+        String enPromoDb = rs.getString("en_promo");
+        sf.setEnPromo(ouiNonToBoolean(enPromoDb));
+
+        sf.setIdDm(rs.getLong("id_dm"));
+
+        // statut : la DB utilise EN_ATTENTE/EN_COURS/TERMINE/ANNULE mais l'entité a EN_REGLE/EN_CREDIT/EN_PROMO
+        String statutDb = rs.getString("statut");
+        sf.setStatut(statutSituationFromDb(statutDb, enPromoDb, sf.getCredit()));
+
+        fillAudit(sf, rs);
+
+        DossierMedical dm = new DossierMedical();
+        dm.setIdDm(sf.getIdDm());
+        sf.setDossierMedical(dm);
+
+        return sf;
+    }
+
+
+    // ===== Helpers SituationFinanciere =====
+    public static Boolean ouiNonToBoolean(String db) {
+        if (db == null) return null;
+        return "OUI".equalsIgnoreCase(db.trim());
+    }
+
+    public static StatutSituationFinanciere statutSituationFromDb(String statutDb, String enPromoDb, Double credit) {
+        // priorité au flag promo
+        if ("OUI".equalsIgnoreCase(String.valueOf(enPromoDb))) return StatutSituationFinanciere.EN_PROMO;
+        // sinon, on décide via le crédit (plus robuste que le mapping 1-1 des enums)
+        if (credit != null && credit > 0.000001) return StatutSituationFinanciere.EN_CREDIT;
+        // fallback
+        return StatutSituationFinanciere.EN_REGLE;
+    }
+
+    // ===== Dossier Medical : Medicament =====
+    public static Medicament mapMedicament(ResultSet rs) throws SQLException {
+        Medicament m = new Medicament();
+
+        m.setIdMct(rs.getLong("id_mct"));
+        m.setId(rs.getObject("id_entite", Long.class)); // BaseEntity.id = id_entite
+
+        m.setNom(rs.getString("nom"));
+        m.setLaboratoire(rs.getString("laboratoire"));
+        m.setType(rs.getString("type"));
+        m.setForme(rs.getString("forme"));
+
+        Boolean remboursable = rs.getObject("remboursable", Boolean.class);
+        m.setRemboursable(remboursable);
+
+        m.setPrixUnitaire(rs.getObject("prix_unitaire", Double.class));
+        m.setDescription(rs.getString("description"));
+
+        // audit entite (si JOIN entite)
+        fillAudit(m, rs);
+        return m;
+    }
+
+
+    // ===== Dossier Medical : PrescriptionMedicament (pivot) =====
+    public static PrescriptionMedicament mapPrescriptionMedicament(ResultSet rs) throws SQLException {
+        PrescriptionMedicament pm = new PrescriptionMedicament();
+        pm.setIdPr(rs.getLong("id_pr"));
+        pm.setIdMct(rs.getLong("id_mct"));
+        pm.setQuantite(rs.getInt("quantite"));
+        return pm;
+    }
+
 }

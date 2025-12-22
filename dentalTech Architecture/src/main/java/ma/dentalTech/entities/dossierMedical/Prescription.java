@@ -32,4 +32,10 @@ public class Prescription extends BaseEntity {
     @ToString.Exclude @EqualsAndHashCode.Exclude
     @Builder.Default
     private List<PrescriptionMedicament> lignes = new ArrayList<>();
+
+    public void setPrescriptionMedicaments(List<PrescriptionMedicament> lignesByPrescription) {
+    }
+
+    public List<PrescriptionMedicament> getPrescriptionMedicaments() {
+    }
 }

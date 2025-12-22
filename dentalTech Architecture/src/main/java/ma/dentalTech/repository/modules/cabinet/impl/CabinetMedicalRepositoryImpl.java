@@ -5,6 +5,7 @@ import ma.dentalTech.entities.cabinet.CabinetMedical;
 import ma.dentalTech.entities.cabinet.Charges;
 import ma.dentalTech.entities.cabinet.Revenues;
 import ma.dentalTech.entities.cabinet.Statistiques;
+import ma.dentalTech.entities.enums.CategorieStatistique;
 import ma.dentalTech.entities.users.Staff;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository;
@@ -201,86 +202,167 @@ public class CabinetMedicalRepositoryImpl implements CabinetMedicalRepository {
 
     @Override
     public void addStaffToCabinet(Long cabinetId, Long staffId) {
-//        String sql = "INSERT INTO Cabinet_Staff(cabinet_id, staff_id) VALUES(?,?)";
-//        try (Connection c = SessionFactory.getInstance().getConnection();
-//             PreparedStatement ps = c.prepareStatement(sql)) {
-//            ps.setLong(1, cabinetId);
-//            ps.setLong(2, staffId);
-//            ps.executeUpdate();
-//        } catch (SQLException e) { throw new RuntimeException(e); }
+        String sql = "INSERT INTO Cabinet_Staff(cabinet_id, staff_id) VALUES(?,?)";
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, cabinetId);
+            ps.setLong(2, staffId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
     @Override
     public void removeStaffFromCabinet(Long cabinetId, Long staffId) {
-//        String sql = "DELETE FROM Cabinet_Staff WHERE cabinet_id=? AND staff_id=?";
-//        try (Connection c = SessionFactory.getInstance().getConnection();
-//             PreparedStatement ps = c.prepareStatement(sql)) {
-//            ps.setLong(1, cabinetId);
-//            ps.setLong(2, staffId);
-//            ps.executeUpdate();
-//        } catch (SQLException e) { throw new RuntimeException(e); }
+        String sql = "DELETE FROM Cabinet_Staff WHERE cabinet_id=? AND staff_id=?";
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, cabinetId);
+            ps.setLong(2, staffId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
     @Override
     public void removeAllStaffFromCabinet(Long cabinetId) {
-//        String sql = "DELETE FROM Cabinet_Staff WHERE cabinet_id=?";
-//        try (Connection c = SessionFactory.getInstance().getConnection();
-//             PreparedStatement ps = c.prepareStatement(sql)) {
-//            ps.setLong(1, cabinetId);
-//            ps.executeUpdate();
-//        } catch (SQLException e) { throw new RuntimeException(e); }
+        String sql = "DELETE FROM Cabinet_Staff WHERE cabinet_id=?";
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, cabinetId);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
     @Override
     public List<Staff> getStaffOfCabinet(Long cabinetId) {
-//        String sql = """
-//            SELECT s.*
-//            FROM Staff s
-//            JOIN Cabinet_Staff cs ON cs.staff_id = s.id_staff
-//            WHERE cs.cabinet_id=?
-//            """;
+        String sql = """
+            SELECT s.*
+            FROM Staff s
+            JOIN Cabinet_Staff cs ON cs.staff_id = s.id_staff
+            WHERE cs.cabinet_id=?
+            """;
         List<Staff> out = new ArrayList<>();
-//        try (Connection c = SessionFactory.getInstance().getConnection();
-//             PreparedStatement ps = c.prepareStatement(sql)) {
-//            ps.setLong(1, cabinetId);
-//            try (ResultSet rs = ps.executeQuery()) {
-//                while (rs.next()) out.add(RowMappers.mapStaff(rs));
-//            }
-//        } catch (SQLException e) { throw new RuntimeException(e); }
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, cabinetId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(RowMappers.mapStaff(rs));
+            }
+        } catch (SQLException e) { throw new RuntimeException(e); }
         return out;
     }
 
     @Override
     public List<CabinetMedical> getCabinetsOfStaff(Long staffId) {
-//        String sql = """
-//            SELECT c.*
-//            FROM cabinet_medicale c
-//            JOIN Cabinet_Staff cs ON cs.cabinet_id = c.id_cabinet
-//            WHERE cs.staff_id=?
-//            """;
+        String sql = """
+            SELECT c.*
+            FROM cabinet_medicale c
+            JOIN Cabinet_Staff cs ON cs.cabinet_id = c.id_cabinet
+            WHERE cs.staff_id=?
+            """;
         List<CabinetMedical> out = new ArrayList<>();
-//        try (Connection c = SessionFactory.getInstance().getConnection();
-//             PreparedStatement ps = c.prepareStatement(sql)) {
-//            ps.setLong(1, staffId);
-//            try (ResultSet rs = ps.executeQuery()) {
-//                while (rs.next()) out.add(RowMappers.mapCabinetMedical(rs));
-//            }
-//        } catch (SQLException e) { throw new RuntimeException(e); }
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, staffId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(RowMappers.mapCabinetMedical(rs));
+            }
+        } catch (SQLException e) { throw new RuntimeException(e); }
         return out;
     }
 
     @Override
     public List<Charges> getChargesOfCabinet(Long cabinetId) {
-        return List.of();
+        List<Charges> charges = new ArrayList<>();
+        String sql = "SELECT * FROM charge WHERE id_cabinet = ?";
+
+        try (Connection conn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, cabinetId);
+            var rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Charges charge = new Charges();
+                charge.setIdCharge(rs.getLong("id_charge"));
+                charge.setTitre(rs.getString("titre"));
+                charge.setDescription(rs.getString("description"));
+                charge.setMontant(rs.getDouble("montant"));
+                charge.setDate(rs.getTimestamp("date_charge").toLocalDateTime()); // assuming DB column is date_charge
+                charge.setIdCabinet(rs.getLong("id_cabinet"));
+
+                charges.add(charge);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la récupération des charges du cabinet", e);
+        }
+
+        return charges;
     }
 
     @Override
     public List<Revenues> getRevenuesOfCabinet(Long cabinetId) {
-        return List.of();
+        List<Revenues> revenues = new ArrayList<>();
+        String sql = "SELECT * FROM revenu WHERE id_cabinet = ?";
+
+        try (Connection conn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, cabinetId);
+            var rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Revenues revenue = new Revenues();
+                revenue.setIdRevenu(rs.getLong("id_revenu"));
+                revenue.setTitre(rs.getString("titre"));
+                revenue.setDescription(rs.getString("description"));
+                revenue.setMontant(rs.getDouble("montant"));
+                revenue.setDate(rs.getTimestamp("date_revenu").toLocalDateTime()); // assuming DB column is date_revenu
+                revenue.setIdCabinet(rs.getLong("id_cabinet"));
+
+                revenues.add(revenue);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la récupération des revenus du cabinet", e);
+        }
+
+        return revenues;
     }
 
     @Override
     public List<Statistiques> getStatistiquesOfCabinet(Long cabinetId) {
-        return List.of();
+        List<Statistiques> stats = new ArrayList<>();
+        String sql = "SELECT * FROM statistiques WHERE id_cabinet = ?";
+
+        try (Connection conn = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, cabinetId);
+            var rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Statistiques stat = new Statistiques();
+                stat.setIdStatistique(rs.getLong("id_statistique"));
+                stat.setIdCabinet(rs.getLong("id_cabinet"));
+                stat.setPeriode(rs.getString("periode"));
+                stat.setDateDebut(rs.getDate("date_debut").toLocalDate());
+                stat.setDateFin(rs.getDate("date_fin").toLocalDate());
+                stat.setNbPatients(rs.getInt("nb_patients"));
+                stat.setNbRdv(rs.getInt("nb_rdv"));
+                stat.setNbConsultation(rs.getInt("nb_consultation"));
+                stat.setRevenuTotal(rs.getDouble("revenu_total"));
+                stat.setTauxAnnulation(rs.getDouble("taux_annulation"));
+                stat.setActePlusEffectif(rs.getString("acte_plus_effectif"));
+                stat.setCategorie(CategorieStatistique.valueOf(rs.getString("categorie"))); // assuming stored as String
+
+                stats.add(stat);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la récupération des statistiques du cabinet", e);
+        }
+
+        return stats;
     }
 }

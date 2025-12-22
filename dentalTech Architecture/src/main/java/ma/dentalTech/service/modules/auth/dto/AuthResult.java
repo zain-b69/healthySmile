@@ -1,8 +1,9 @@
 package ma.dentalTech.service.modules.auth.dto;
 
-import java.time.LocalDateTime;
 import lombok.*;
 import ma.dentalTech.entities.enums.RoleType;
+
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -25,6 +26,9 @@ public class AuthResult {
     // Optionnel: token si plus tard tu fais JWT/session
     private String token;
 
+    // Optionnel: erreurs détaillées (validation, etc.)
+    private Object errors;
+
     public static AuthResult ok(Long idUser, String nom, String email, RoleType role) {
         return AuthResult.builder()
                 .success(true)
@@ -45,6 +49,12 @@ public class AuthResult {
                 .build();
     }
 
-    public static AuthResult failure(String authenticationFailed, Object errors) {
+    public static AuthResult failure(String message, Object errors) {
+        return AuthResult.builder()
+                .success(false)
+                .message(message)
+                .errors(errors)
+                .authenticatedAt(LocalDateTime.now())
+                .build();
     }
 }
