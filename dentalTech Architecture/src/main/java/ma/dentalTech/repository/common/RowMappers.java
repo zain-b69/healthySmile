@@ -16,6 +16,28 @@ public final class RowMappers {
 
     // ===== Helpers =====
 
+    private static CategorieAntecedent toCategorieAntecedent(String dbValue) {
+        if (dbValue == null) return null;
+        String v = dbValue.trim().toUpperCase();
+
+        return switch (v) {
+            case "CHRONIQUE" -> CategorieAntecedent.MALADIE_CHRONIQUE;
+            case "ALLERGIE" -> CategorieAntecedent.ALLERGIE;
+            case "CONTRE_INDICATION", "CONTRE-INDICATION" -> CategorieAntecedent.CONTRE_INDICATION;
+            case "TRAITEMENT", "TRAITEMENT_EN_COURS" -> CategorieAntecedent.TRAITEMENT_EN_COURS;
+            case "CHIRURGICAL" -> CategorieAntecedent.ANTECEDENT_CHIRURGICAL;
+            case "INFECTIEUX" -> CategorieAntecedent.ANTECEDENT_INFECTIEUX;
+            case "DENTAIRE" -> CategorieAntecedent.ANTECEDENT_DENTAIRE;
+            case "HABITUDE", "HABITUDE_DE_VIE" -> CategorieAntecedent.HABITUDE_DE_VIE;
+            case "AUTRE" -> CategorieAntecedent.AUTRE;
+            default -> {
+                // fallback: si DB contient déjà une valeur enum exacte
+                yield CategorieAntecedent.valueOf(v);
+            }
+        };
+    }
+
+
     public static void fillAudit(BaseEntity e, ResultSet rs) throws SQLException {
         //tous les find…() qui utilisent ces mappers doivent JOIN entite.
         Date dc = rs.getDate("date_creation");
@@ -60,7 +82,8 @@ public final class RowMappers {
         a.setId(rs.getObject("id_entite", Long.class)); // BaseEntity.id = id_entite
         a.setIdAntecedent(rs.getLong("id_antecedent"));
         a.setNom(rs.getString("nom"));
-        a.setCategorie(rs.getString("categorie"));
+        String catDb = rs.getString("categorie");
+        a.setCategorie(toCategorieAntecedent(catDb));
 
         String nr = rs.getString("niveau_de_risque");
         a.setNiveauDeRisque(nr != null ? NiveauRisque.valueOf(nr) : null);
@@ -566,6 +589,7 @@ public final class RowMappers {
 
 
     // ===== Dossier Medical : SituationFinanciere =====
+// ===== Dossier Medical : SituationFinanciere =====
     public static SituationFinanciere mapSituationFinanciere(ResultSet rs) throws SQLException {
         SituationFinanciere sf = new SituationFinanciere();
 
@@ -576,14 +600,13 @@ public final class RowMappers {
         sf.setTotalePaye(rs.getObject("totale_paye", Double.class));
         sf.setCredit(rs.getObject("credit", Double.class));
 
-        String enPromoDb = rs.getString("en_promo");
-        sf.setEnPromo(ouiNonToBoolean(enPromoDb));
+        // La DB ne contient pas "en_promo" => on déduit via statut
+        String statutDb = rs.getString("statut");
+        StatutSituationFinanciere statut = statutSituationFromDb(statutDb, sf.getCredit());
+        sf.setStatut(statut);
+        sf.setEnPromo(statut == StatutSituationFinanciere.EN_PROMO);
 
         sf.setIdDm(rs.getLong("id_dm"));
-
-        // statut : la DB utilise EN_ATTENTE/EN_COURS/TERMINE/ANNULE mais l'entité a EN_REGLE/EN_CREDIT/EN_PROMO
-        String statutDb = rs.getString("statut");
-        sf.setStatut(statutSituationFromDb(statutDb, enPromoDb, sf.getCredit()));
 
         fillAudit(sf, rs);
 
@@ -594,21 +617,17 @@ public final class RowMappers {
         return sf;
     }
 
-
     // ===== Helpers SituationFinanciere =====
-    public static Boolean ouiNonToBoolean(String db) {
-        if (db == null) return null;
-        return "OUI".equalsIgnoreCase(db.trim());
-    }
-
-    public static StatutSituationFinanciere statutSituationFromDb(String statutDb, String enPromoDb, Double credit) {
-        // priorité au flag promo
-        if ("OUI".equalsIgnoreCase(String.valueOf(enPromoDb))) return StatutSituationFinanciere.EN_PROMO;
-        // sinon, on décide via le crédit (plus robuste que le mapping 1-1 des enums)
+    public static StatutSituationFinanciere statutSituationFromDb(String statutDb, Double credit) {
+        if (statutDb != null) {
+            try {
+                return StatutSituationFinanciere.valueOf(statutDb);
+            } catch (IllegalArgumentException ignored) {}
+        }
         if (credit != null && credit > 0.000001) return StatutSituationFinanciere.EN_CREDIT;
-        // fallback
         return StatutSituationFinanciere.EN_REGLE;
     }
+
 
     // ===== Dossier Medical : Medicament =====
     public static Medicament mapMedicament(ResultSet rs) throws SQLException {

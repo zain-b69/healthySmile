@@ -23,4 +23,6 @@ public interface ChargesRepository extends CrudRepository<Charges, Long> {
 
     // ---- Relations optionnelles ----
     CabinetMedical getCabinetOfCharge(Long chargeId);
+
+
 }

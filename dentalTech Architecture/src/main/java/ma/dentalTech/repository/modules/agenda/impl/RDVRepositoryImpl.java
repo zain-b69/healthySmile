@@ -13,13 +13,35 @@ import java.util.Optional;
 
 public class RDVRepositoryImpl implements RDVRepository {
 
+    // ========== AJOUTER CES 2 LIGNES ==========
+    private final SessionFactory sessionFactory = SessionFactory.getInstance();
+
+    private Connection cn() throws SQLException {
+        return sessionFactory.getConnection();
+    }
+    // ==========================================
+
+    // ===================== BASE SELECT =====================
+    private static final String BASE_SELECT = """
+        SELECT
+            r.*,
+            e.id_entite,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM rdv r
+        LEFT JOIN entite e ON e.id_entite = r.id_entite
+    """;
+
     // -------- CRUD --------
     @Override
     public List<RDV> findAll() {
-        String sql = "SELECT * FROM rdv ORDER BY date, heure";
+        String sql = BASE_SELECT + " ORDER BY r.date, r.heure";
         List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) out.add(RowMappers.mapRDV(rs));
         } catch (SQLException e) {
@@ -30,13 +52,13 @@ public class RDVRepositoryImpl implements RDVRepository {
 
     @Override
     public RDV findById(Long id) {
-        String sql = "SELECT * FROM rdv WHERE id_rdv = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = BASE_SELECT + " WHERE r.id_rdv = ?";
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return RowMappers.mapRDV(rs);
-                return null;
+                return rs.next() ? RowMappers.mapRDV(rs) : null;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -45,10 +67,25 @@ public class RDVRepositoryImpl implements RDVRepository {
 
     @Override
     public void create(RDV rdv) {
-        String sql = "INSERT INTO rdv(id_entite, id_patient, id_medecin, date, heure, motif, statut, note_medecin, id_creneau, id_dm, agenda_mensuel_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String sql = """
+            INSERT INTO rdv (
+                id_entite,
+                id_patient,
+                id_medecin,
+                date,
+                heure,
+                motif,
+                statut,
+                note_medecin,
+                id_creneau,
+                id_dm,
+                agenda_mensuel_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setObject(1, rdv.getIdEntite(), Types.BIGINT);
             ps.setLong(2, rdv.getIdPatient());
             ps.setLong(3, rdv.getIdMedecin());
@@ -60,7 +97,9 @@ public class RDVRepositoryImpl implements RDVRepository {
             ps.setObject(9, rdv.getIdCreneau(), Types.BIGINT);
             ps.setLong(10, rdv.getIdDm());
             ps.setObject(11, rdv.getAgendaMensuelId(), Types.BIGINT);
+
             ps.executeUpdate();
+
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) rdv.setIdRdv(keys.getLong(1));
             }
@@ -71,9 +110,24 @@ public class RDVRepositoryImpl implements RDVRepository {
 
     @Override
     public void update(RDV rdv) {
-        String sql = "UPDATE rdv SET id_entite=?, id_patient=?, id_medecin=?, date=?, heure=?, motif=?, statut=?, note_medecin=?, id_creneau=?, id_dm=?, agenda_mensuel_id=? WHERE id_rdv=?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = """
+            UPDATE rdv SET
+                id_entite = ?,
+                id_patient = ?,
+                id_medecin = ?,
+                date = ?,
+                heure = ?,
+                motif = ?,
+                statut = ?,
+                note_medecin = ?,
+                id_creneau = ?,
+                id_dm = ?,
+                agenda_mensuel_id = ?
+            WHERE id_rdv = ?
+        """;
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setObject(1, rdv.getIdEntite(), Types.BIGINT);
             ps.setLong(2, rdv.getIdPatient());
             ps.setLong(3, rdv.getIdMedecin());
@@ -86,6 +140,7 @@ public class RDVRepositoryImpl implements RDVRepository {
             ps.setLong(10, rdv.getIdDm());
             ps.setObject(11, rdv.getAgendaMensuelId(), Types.BIGINT);
             ps.setLong(12, rdv.getIdRdv());
+
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -100,8 +155,9 @@ public class RDVRepositoryImpl implements RDVRepository {
     @Override
     public void deleteById(Long id) {
         String sql = "DELETE FROM rdv WHERE id_rdv = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -110,139 +166,149 @@ public class RDVRepositoryImpl implements RDVRepository {
     }
 
     // -------- Recherche spécifique --------
+
     @Override
     public List<RDV> findByMedecinAndDate(Long idMedecin, LocalDate date) {
-        String sql = "SELECT * FROM rdv WHERE id_medecin = ? AND date = ?";
-        List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = BASE_SELECT + " WHERE r.id_medecin = ? AND r.date = ?";
+        return queryList(sql, ps -> {
             ps.setLong(1, idMedecin);
             ps.setDate(2, Date.valueOf(date));
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapRDV(rs));
-            }
-        } catch (SQLException e) { throw new RuntimeException(e); }
-        return out;
+        });
     }
 
     @Override
     public List<RDV> findByMedecinAndDateRange(Long idMedecin, LocalDate start, LocalDate end) {
-        String sql = "SELECT * FROM rdv WHERE id_medecin = ? AND date BETWEEN ? AND ?";
-        List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = BASE_SELECT + " WHERE r.id_medecin = ? AND r.date BETWEEN ? AND ?";
+        return queryList(sql, ps -> {
             ps.setLong(1, idMedecin);
             ps.setDate(2, Date.valueOf(start));
             ps.setDate(3, Date.valueOf(end));
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapRDV(rs));
-            }
-        } catch (SQLException e) { throw new RuntimeException(e); }
-        return out;
+        });
     }
 
     @Override
     public List<RDV> findByPatient(Long idPatient) {
-        String sql = "SELECT * FROM rdv WHERE id_patient = ?";
-        List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setLong(1, idPatient);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapRDV(rs));
-            }
-        } catch (SQLException e) { throw new RuntimeException(e); }
-        return out;
+        String sql = BASE_SELECT + " WHERE r.id_patient = ?";
+        return queryList(sql, ps -> ps.setLong(1, idPatient));
     }
 
     @Override
     public List<RDV> findByAgenda(Long agendaId) {
-        String sql = "SELECT * FROM rdv WHERE agenda_mensuel_id = ?";
-        List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setLong(1, agendaId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapRDV(rs));
-            }
-        } catch (SQLException e) { throw new RuntimeException(e); }
-        return out;
+        String sql = BASE_SELECT + " WHERE r.agenda_mensuel_id = ?";
+        return queryList(sql, ps -> ps.setLong(1, agendaId));
     }
 
     @Override
     public List<RDV> findByStatut(Enum statut) {
-        String sql = "SELECT * FROM rdv WHERE statut = ?";
-        List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, statut.name());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapRDV(rs));
-            }
-        } catch (SQLException e) { throw new RuntimeException(e); }
-        return out;
+        String sql = BASE_SELECT + " WHERE r.statut = ?";
+        return queryList(sql, ps -> ps.setString(1, statut.name()));
     }
 
     @Override
     public List<RDV> findByCreneau(Long idCreneau) {
-        String sql = "SELECT * FROM rdv WHERE id_creneau = ?";
-        List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setLong(1, idCreneau);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(RowMappers.mapRDV(rs));
-            }
-        } catch (SQLException e) { throw new RuntimeException(e); }
-        return out;
+        String sql = BASE_SELECT + " WHERE r.id_creneau = ?";
+        return queryList(sql, ps -> ps.setLong(1, idCreneau));
     }
 
     @Override
     public Optional<RDV> findByCreneauUnique(Long idCreneau) {
-        String sql = "SELECT * FROM rdv WHERE id_creneau = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = BASE_SELECT + " WHERE r.id_creneau = ?";
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, idCreneau);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(RowMappers.mapRDV(rs));
-                return Optional.empty();
+                return rs.next() ? Optional.of(RowMappers.mapRDV(rs)) : Optional.empty();
             }
-        } catch (SQLException e) { throw new RuntimeException(e); }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean existsByCreneau(Long idCreneau) {
         String sql = "SELECT 1 FROM rdv WHERE id_creneau = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, idCreneau);
-            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
-        } catch (SQLException e) { throw new RuntimeException(e); }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public long count() {
         String sql = "SELECT COUNT(*) FROM rdv";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             rs.next();
             return rs.getLong(1);
-        } catch (SQLException e) { throw new RuntimeException(e); }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public List<RDV> findPage(int limit, int offset) {
-        String sql = "SELECT * FROM rdv ORDER BY date, heure LIMIT ? OFFSET ?";
-        List<RDV> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = BASE_SELECT + " ORDER BY r.date, r.heure LIMIT ? OFFSET ?";
+        return queryList(sql, ps -> {
             ps.setInt(1, limit);
             ps.setInt(2, offset);
+        });
+    }
+
+    // -------- Helper --------
+    private List<RDV> queryList(String sql, SQLConsumer<PreparedStatement> binder) {
+        List<RDV> out = new ArrayList<>();
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+            binder.accept(ps);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(RowMappers.mapRDV(rs));
             }
-        } catch (SQLException e) { throw new RuntimeException(e); }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         return out;
     }
+
+    @Override
+    public void confirmer(Long idRdv) {
+        String sql = "UPDATE rdv SET statut = ? WHERE id_rdv = ?";
+
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+            ps.setString(1, "CONFIRME");
+            ps.setLong(2, idRdv);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void annuler(Long idRdv) {
+        String sql = "UPDATE rdv SET statut = ? WHERE id_rdv = ?";
+
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+            ps.setString(1, "ANNULE"); // adapte si ton enum est ANNULÉ / ANNULEE / CANCELED etc.
+            ps.setLong(2, idRdv);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @FunctionalInterface
+    private interface SQLConsumer<T> {
+        void accept(T t) throws SQLException;
+    }
+
 }

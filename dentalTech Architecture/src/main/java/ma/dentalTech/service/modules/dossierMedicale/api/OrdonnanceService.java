@@ -8,19 +8,22 @@ import java.util.List;
 
 public interface OrdonnanceService {
 
-    List<Ordonnance> findAll();
-
-    Ordonnance findById(Long idOrd);
-
-    void create(Ordonnance ordonnance) throws SQLException;
-
-    void update(Ordonnance ordonnance);
-
+    // ---- minimal CRUD utile côté API / use-cases
+    Ordonnance getById(Long idOrd);
     void deleteById(Long idOrd);
 
+    // ---- finders utiles
     List<Ordonnance> findByDossierMedical(Long idDm);
-
     List<Ordonnance> findByConsultation(Long idConsultation);
-
+    List<Ordonnance> findPage(int limit, int offset);
     List<Prescription> getPrescriptions(Long idOrd);
+
+    // ---- use cases
+    Ordonnance createOrdonnanceAvecPrescriptions(Ordonnance ordonnance, List<Prescription> prescriptions) throws SQLException;
+    Prescription addPrescriptionToOrdonnance(Long ordonnanceId, Prescription prescription) throws SQLException;
+
+    // ---- métier: validation + cohérence
+    void validateOrThrow(Ordonnance ordonnance);
+    void validateExistingOrThrow(Long idOrd);
+    void validatePrescriptionsOrThrow(List<Prescription> prescriptions);
 }

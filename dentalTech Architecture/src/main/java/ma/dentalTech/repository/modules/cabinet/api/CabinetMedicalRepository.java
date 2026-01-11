@@ -35,8 +35,5 @@ public interface CabinetMedicalRepository extends CrudRepository<CabinetMedical,
 
     List<CabinetMedical> getCabinetsOfStaff(Long staffId);
 
-    // ---- Relations One-to-Many (optionnel) ----
-    List<Charges> getChargesOfCabinet(Long cabinetId);
-    List<Revenues> getRevenuesOfCabinet(Long cabinetId);
-    List<Statistiques> getStatistiquesOfCabinet(Long cabinetId);
+
 }

@@ -377,4 +377,18 @@ public class UtilisateurRepositoryImpl implements UtilisateurRepository {
             return r.getId();
         }
     }
+
+    @Override
+    public void updatePassword(Long idUser, String hashedPassword) {
+        String sql = "UPDATE utilisateur SET mot_de_passe = ? WHERE id_user = ?";
+        try (Connection c = SessionFactory.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, hashedPassword);
+            ps.setLong(2, idUser);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

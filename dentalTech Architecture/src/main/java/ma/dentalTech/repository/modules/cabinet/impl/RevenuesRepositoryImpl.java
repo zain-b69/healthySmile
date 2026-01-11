@@ -13,32 +13,87 @@ import java.util.List;
 
 public class RevenuesRepositoryImpl implements RevenuesRepository {
 
+    // ========== AJOUTER CES 2 LIGNES ==========
+    private final SessionFactory sessionFactory = SessionFactory.getInstance();
+
+    private Connection cn() throws SQLException {
+        return sessionFactory.getConnection();
+    }
+    // ==========================================
+
     // -------- CRUD --------
 
     @Override
     public List<Revenues> findAll() {
-        String sql = "SELECT * FROM Revenu ORDER BY date_revenu DESC";
+        String sql = """
+        SELECT 
+            r.id_revenu,
+            r.id_cabinet,
+            r.id_entite,
+            r.titre,
+            r.description,
+            r.montant,
+            r.date_revenu,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM revenu r
+        LEFT JOIN entite e ON r.id_entite = e.id_entite
+        ORDER BY r.date_revenu DESC
+        """;
+
         List<Revenues> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) out.add(RowMappers.mapRevenues(rs));
-        } catch (SQLException e) { throw new RuntimeException(e); }
+
+            while (rs.next()) {
+                out.add(RowMappers.mapRevenues(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la récupération des revenus", e);
+        }
         return out;
     }
 
+
     @Override
     public Revenues findById(Long id) {
-        String sql = "SELECT * FROM Revenu WHERE id_revenu=?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = """
+        SELECT 
+            r.id_revenu,
+            r.id_cabinet,
+            r.id_entite,
+            r.titre,
+            r.description,
+            r.montant,
+            r.date_revenu,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM revenu r
+        LEFT JOIN entite e ON r.id_entite = e.id_entite
+        WHERE r.id_revenu = ?
+        """;
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return RowMappers.mapRevenues(rs);
+                if (rs.next()) {
+                    return RowMappers.mapRevenues(rs);
+                }
                 return null;
             }
-        } catch (SQLException e) { throw new RuntimeException(e); }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de la récupération du revenu", e);
+        }
     }
+
 
     @Override
     public void create(Revenues revenue) {
@@ -46,8 +101,9 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             INSERT INTO Revenu(titre, description, montant, date_revenu, id_cabinet)
             VALUES(?,?,?,?,?)
             """;
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, revenue.getTitre());
             ps.setString(2, revenue.getDescription());
@@ -56,6 +112,7 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             ps.setLong(5, revenue.getIdCabinet());
 
             ps.executeUpdate();
+
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) revenue.setIdRevenu(keys.getLong(1));
             }
@@ -69,8 +126,9 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
               titre=?, description=?, montant=?, date_revenu=?, id_cabinet=?
             WHERE id_revenu=?
             """;
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             ps.setString(1, revenue.getTitre());
             ps.setString(2, revenue.getDescription());
@@ -80,6 +138,7 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             ps.setLong(6, revenue.getIdRevenu());
 
             ps.executeUpdate();
+
         } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
@@ -91,8 +150,9 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
     @Override
     public void deleteById(Long id) {
         String sql = "DELETE FROM Revenu WHERE id_revenu=?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException(e); }
@@ -102,10 +162,29 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
 
     @Override
     public List<Revenues> findByCabinet(Long cabinetId) {
-        String sql = "SELECT * FROM Revenu WHERE id_cabinet=? ORDER BY date_revenu DESC";
+        String sql = """
+        SELECT 
+            r.id_revenu,
+            r.id_cabinet,
+            r.id_entite,
+            r.titre,
+            r.description,
+            r.montant,
+            r.date_revenu,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM revenu r
+        LEFT JOIN entite e ON r.id_entite = e.id_entite
+        WHERE r.id_cabinet=?
+        ORDER BY r.date_revenu DESC
+        """;
+
         List<Revenues> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, cabinetId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(RowMappers.mapRevenues(rs));
@@ -117,13 +196,28 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
     @Override
     public List<Revenues> findByCabinetAndDateBetween(Long cabinetId, LocalDateTime start, LocalDateTime end) {
         String sql = """
-            SELECT * FROM Revenu
-            WHERE id_cabinet=? AND date_revenu BETWEEN ? AND ?
-            ORDER BY date_revenu DESC
-            """;
+        SELECT 
+            r.id_revenu,
+            r.id_cabinet,
+            r.id_entite,
+            r.titre,
+            r.description,
+            r.montant,
+            r.date_revenu,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM revenu r
+        LEFT JOIN entite e ON r.id_entite = e.id_entite
+        WHERE r.id_cabinet=? AND r.date_revenu BETWEEN ? AND ?
+        ORDER BY r.date_revenu DESC
+        """;
+
         List<Revenues> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             ps.setLong(1, cabinetId);
             ps.setTimestamp(2, Timestamp.valueOf(start));
@@ -138,10 +232,29 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
 
     @Override
     public List<Revenues> findByDateBetween(LocalDateTime start, LocalDateTime end) {
-        String sql = "SELECT * FROM Revenu WHERE date_revenu BETWEEN ? AND ? ORDER BY date_revenu DESC";
+        String sql = """
+        SELECT 
+            r.id_revenu,
+            r.id_cabinet,
+            r.id_entite,
+            r.titre,
+            r.description,
+            r.montant,
+            r.date_revenu,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM revenu r
+        LEFT JOIN entite e ON r.id_entite = e.id_entite
+        WHERE r.date_revenu BETWEEN ? AND ?
+        ORDER BY r.date_revenu DESC
+        """;
+
         List<Revenues> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             ps.setTimestamp(1, Timestamp.valueOf(start));
             ps.setTimestamp(2, Timestamp.valueOf(end));
@@ -155,9 +268,10 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
 
     @Override
     public boolean existsById(Long id) {
-        String sql = "SELECT 1 FROM Revenu WHERE id_revenu=?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = "SELECT 1 FROM revenu WHERE id_revenu=?";
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
         } catch (SQLException e) { throw new RuntimeException(e); }
@@ -166,8 +280,9 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
     @Override
     public long count() {
         String sql = "SELECT COUNT(*) FROM Revenu";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             rs.next();
             return rs.getLong(1);
@@ -176,10 +291,28 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
 
     @Override
     public List<Revenues> findPage(int limit, int offset) {
-        String sql = "SELECT * FROM Revenu ORDER BY date_revenu DESC LIMIT ? OFFSET ?";
+        String sql = """
+        SELECT 
+            r.id_revenu,
+            r.id_cabinet,
+            r.id_entite,
+            r.titre,
+            r.description,
+            r.montant,
+            r.date_revenu,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM revenu r
+        LEFT JOIN entite e ON r.id_entite = e.id_entite
+        ORDER BY r.date_revenu DESC LIMIT ? OFFSET ?
+        """;
+
         List<Revenues> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setInt(1, limit);
             ps.setInt(2, offset);
             try (ResultSet rs = ps.executeQuery()) {
@@ -199,8 +332,9 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             JOIN Revenu r ON r.id_cabinet = c.id_cabinet
             WHERE r.id_revenu=?
             """;
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, revenueId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return RowMappers.mapCabinetMedical(rs);

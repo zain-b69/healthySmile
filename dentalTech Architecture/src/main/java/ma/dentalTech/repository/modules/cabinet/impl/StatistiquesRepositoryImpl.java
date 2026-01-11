@@ -13,28 +13,66 @@ import java.util.List;
 
 public class StatistiquesRepositoryImpl implements StatistiquesRepository {
 
+    // ========== AJOUTER CES 2 LIGNES ==========
+    private final SessionFactory sessionFactory = SessionFactory.getInstance();
+
+    private Connection cn() throws SQLException {
+        return sessionFactory.getConnection();
+    }
+    // ==========================================
+
+    // ---------- BASE SELECT QUERY ----------
+    private static final String BASE_SELECT = """
+        SELECT 
+            s.id_statistique,
+            s.id_cabinet,
+            s.id_entite,
+            s.periode,
+            s.date_debut,
+            s.date_fin,
+            s.nb_patients,
+            s.nb_rdv,
+            s.nb_consultation,
+            s.revenu_total,
+            s.taux_annulation,
+            s.acte_plus_effectif,
+            s.categorie,
+            e.date_creation,
+            e.date_derniere_modification,
+            e.cree_par,
+            e.modifie_par
+        FROM statistiques s
+        LEFT JOIN entite e ON s.id_entite = e.id_entite
+    """;
+
     // ---------- CRUD ----------
 
     @Override
     public List<Statistiques> findAll() {
-        String sql = "SELECT * FROM statistiques ORDER BY date_fin DESC";
+        String sql = BASE_SELECT + " ORDER BY s.date_fin DESC";
+
         List<Statistiques> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) out.add(RowMappers.mapStatistiques(rs));
+            while (rs.next()) {
+                out.add(RowMappers.mapStatistiques(rs));
+            }
+
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Erreur lors de la récupération des statistiques", e);
         }
         return out;
     }
 
     @Override
     public Statistiques findById(Long id) {
-        String sql = "SELECT * FROM statistiques WHERE id_statistique=?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = BASE_SELECT + " WHERE s.id_statistique = ?";
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -42,34 +80,34 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
                 return null;
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Erreur lors de la récupération de la statistique", e);
         }
     }
 
     @Override
     public void create(Statistiques s) {
         String sql = """
-            INSERT INTO statistiques(
-                id_entite, id_cabinet, periode, date_debut, date_fin,
-                nb_patients, nb_rdv, nb_consultation,
-                revenu_total, taux_annulation, acte_plus_effectif, categorie
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-            """;
+        INSERT INTO statistiques(
+            id_cabinet, periode, date_debut, date_fin,
+            nb_patients, nb_rdv, nb_consultation,
+            revenu_total, taux_annulation, acte_plus_effectif, categorie
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+        """;
 
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setObject(1, s.getIdEntite());
-            ps.setLong(2, s.getIdCabinet());
-            ps.setString(3, s.getPeriode());
-            ps.setDate(4, Date.valueOf(s.getDateDebut()));
-            ps.setDate(5, Date.valueOf(s.getDateFin()));
-            ps.setObject(6, s.getNbPatients());
-            ps.setObject(7, s.getNbRdv());
-            ps.setObject(8, s.getNbConsultation());
-            ps.setObject(9, s.getRevenuTotal());
-            ps.setObject(10, s.getTauxAnnulation());
-            ps.setString(11, s.getActePlusEffectif());
+            ps.setLong(1, s.getIdCabinet());
+            ps.setString(2, s.getPeriode());
+            ps.setDate(3, Date.valueOf(s.getDateDebut()));
+            ps.setDate(4, Date.valueOf(s.getDateFin()));
+            ps.setObject(5, s.getNbPatients());
+            ps.setObject(6, s.getNbRdv());
+            ps.setObject(7, s.getNbConsultation());
+            ps.setObject(8, s.getRevenuTotal());
+            ps.setObject(9, s.getTauxAnnulation());
+            ps.setString(10, s.getActePlusEffectif());
+            ps.setString(11, s.getCategorie().name());
 
             ps.executeUpdate();
 
@@ -85,7 +123,7 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     public void update(Statistiques s) {
         String sql = """
             UPDATE statistiques SET
-                id_entite=?, id_cabinet=?, periode=?,
+                id_cabinet=?, periode=?,
                 date_debut=?, date_fin=?,
                 nb_patients=?, nb_rdv=?, nb_consultation=?,
                 revenu_total=?, taux_annulation=?,
@@ -93,23 +131,25 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
             WHERE id_statistique=?
             """;
 
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
-            ps.setObject(1, s.getIdEntite());
-            ps.setLong(2, s.getIdCabinet());
-            ps.setString(3, s.getPeriode());
-            ps.setDate(4, Date.valueOf(s.getDateDebut()));
-            ps.setDate(5, Date.valueOf(s.getDateFin()));
-            ps.setObject(6, s.getNbPatients());
-            ps.setObject(7, s.getNbRdv());
-            ps.setObject(8, s.getNbConsultation());
-            ps.setObject(9, s.getRevenuTotal());
-            ps.setObject(10, s.getTauxAnnulation());
-            ps.setString(11, s.getActePlusEffectif());
+            // Removed id_entite parameter
+            ps.setLong(1, s.getIdCabinet());
+            ps.setString(2, s.getPeriode());
+            ps.setDate(3, Date.valueOf(s.getDateDebut()));
+            ps.setDate(4, Date.valueOf(s.getDateFin()));
+            ps.setObject(5, s.getNbPatients());
+            ps.setObject(6, s.getNbRdv());
+            ps.setObject(7, s.getNbConsultation());
+            ps.setObject(8, s.getRevenuTotal());
+            ps.setObject(9, s.getTauxAnnulation());
+            ps.setString(10, s.getActePlusEffectif());
+            ps.setString(11, s.getCategorie().name());
             ps.setLong(12, s.getIdStatistique());
 
             ps.executeUpdate();
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -123,11 +163,13 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     @Override
     public void deleteById(Long id) {
         String sql = "DELETE FROM statistiques WHERE id_statistique=?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -137,33 +179,34 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
 
     @Override
     public List<Statistiques> findByCabinet(Long cabinetId) {
-        String sql = "SELECT * FROM Statistique WHERE id_cabinet=?";
+        String sql = BASE_SELECT + " WHERE s.id_cabinet = ? ORDER BY s.date_fin DESC";
         return findList(sql, cabinetId);
     }
 
     @Override
     public List<Statistiques> findByCategorie(CategorieStatistique categorie) {
-        String sql = "SELECT * FROM Statistique WHERE categorie=?";
+        String sql = BASE_SELECT + " WHERE s.categorie = ? ORDER BY s.date_fin DESC";
         return findList(sql, categorie.name());
     }
 
     @Override
     public List<Statistiques> findByCabinetAndCategorie(Long cabinetId, CategorieStatistique categorie) {
-        String sql = "SELECT * FROM Statistique WHERE id_cabinet=? AND categorie=?";
+        String sql = BASE_SELECT + " WHERE s.id_cabinet = ? AND s.categorie = ? ORDER BY s.date_fin DESC";
         return findList(sql, cabinetId, categorie.name());
     }
 
     @Override
     public List<Statistiques> findByDate(LocalDate dateCalcul) {
-        String sql = "SELECT * FROM Statistique WHERE date_fin=?";
+        String sql = BASE_SELECT + " WHERE s.date_fin = ? ORDER BY s.date_fin DESC";
         return findList(sql, Date.valueOf(dateCalcul));
     }
 
     @Override
     public boolean existsById(Long id) {
         String sql = "SELECT 1 FROM statistiques WHERE id_statistique=?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -177,8 +220,9 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     @Override
     public long count() {
         String sql = "SELECT COUNT(*) FROM statistiques";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             rs.next();
@@ -190,7 +234,7 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
 
     @Override
     public List<Statistiques> findPage(int limit, int offset) {
-        String sql = "SELECT * FROM Statistique ORDER BY date_fin DESC LIMIT ? OFFSET ?";
+        String sql = BASE_SELECT + " ORDER BY s.date_fin DESC LIMIT ? OFFSET ?";
         return findList(sql, limit, offset);
     }
 
@@ -198,8 +242,9 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
 
     private List<Statistiques> findList(String sql, Object... params) {
         List<Statistiques> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             for (int i = 0; i < params.length; i++) {
                 ps.setObject(i + 1, params[i]);

@@ -181,8 +181,10 @@ public class SeedMedecin {
         if (!tableExists(cn, "staff")) return;
 
         Map<String, Object> values = new LinkedHashMap<>();
-        // PK/FK
-        if (columnExists(cn, "staff", "id_user")) values.put("id_user", userId);
+
+        // PK/FK : dans ta DB c'est id_staff (FK -> utilisateur.id_user)
+        if (columnExists(cn, "staff", "id_staff")) values.put("id_staff", userId);
+        else if (columnExists(cn, "staff", "id_user")) values.put("id_user", userId); // au cas où autre DB
 
         // fields
         if (columnExists(cn, "staff", "salaire")) values.put("salaire", salaire);
@@ -196,10 +198,12 @@ public class SeedMedecin {
             else if (columnExists(cn, "staff", "id_cabinet")) values.put("id_cabinet", cabinetId);
         }
 
-        if (values.isEmpty()) return;
+        // Si on n'a pas pu mettre la PK => on n'insère pas (sinon erreur SQL)
+        if (!values.containsKey("id_staff") && !values.containsKey("id_user")) return;
 
         insertDynamic(cn, "staff", values);
     }
+
 
     private static void insertMedecinIfPossible(Connection cn, long userId, String specialite) throws SQLException {
         if (!tableExists(cn, "medecin")) return;

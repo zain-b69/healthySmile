@@ -5,13 +5,23 @@ import ma.dentalTech.entities.dossierMedical.InterventionMedecin;
 import java.util.List;
 
 public interface InterventionMedecinService {
-    InterventionMedecin create(InterventionMedecin im);
-    InterventionMedecin update(InterventionMedecin im);
-    InterventionMedecin getById(Long idIm);
-    List<InterventionMedecin> getAll();
-    boolean delete(Long idIm);
 
-    List<InterventionMedecin> getByConsultation(Long idConsultation);
-    List<InterventionMedecin> getByActe(Long idActe);
-    List<InterventionMedecin> getByConsultationAndNumDent(Long idConsultation, Integer numDent);
+    // ---- Use-case 1 : ajouter une intervention (avec règles) ----
+    InterventionMedecin ajouterIntervention(Long idConsultation,
+                                            Long idActe,
+                                            Integer numDent,
+                                            Double prixDePatient);
+
+    // ---- Use-case 2 : ajuster le prix patient (remise, négociation) ----
+    InterventionMedecin changerPrixPatient(Long idIm, Double nouveauPrix);
+
+    // ---- Use-case 3 : total d'une consultation ----
+    double calculerTotalConsultation(Long idConsultation);
+
+    // ---- Use-case 4 : listes utiles ----
+    List<InterventionMedecin> interventionsDeConsultation(Long idConsultation);
+    List<InterventionMedecin> interventionsDeConsultationPourDent(Long idConsultation, Integer numDent);
+
+    // ---- Utilitaires ----
+    InterventionMedecin getById(Long idIm);
 }

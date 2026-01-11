@@ -179,34 +179,49 @@ public class SeedSecretaire {
         if (!tableExists(cn, "staff")) return;
 
         Map<String, Object> values = new LinkedHashMap<>();
-        if (columnExists(cn, "staff", "id_user")) values.put("id_user", userId);
 
+        // ✅ PK/FK : dans ta DB c’est souvent id_staff (FK -> utilisateur.id_user)
+        if (columnExists(cn, "staff", "id_staff")) values.put("id_staff", userId);
+        else if (columnExists(cn, "staff", "id_user")) values.put("id_user", userId); // autre variante possible
+
+        // fields
         if (columnExists(cn, "staff", "salaire")) values.put("salaire", salaire);
         if (columnExists(cn, "staff", "prime")) values.put("prime", prime);
         if (columnExists(cn, "staff", "date_recrutement")) values.put("date_recrutement", dateRecrutement);
         if (columnExists(cn, "staff", "solde_conge")) values.put("solde_conge", soldeConge);
 
+        // cabinet column variants
         if (cabinetId != null) {
             if (columnExists(cn, "staff", "cabinet_id")) values.put("cabinet_id", cabinetId);
             else if (columnExists(cn, "staff", "id_cabinet")) values.put("id_cabinet", cabinetId);
         }
 
-        if (!values.isEmpty()) insertDynamic(cn, "staff", values);
+        // ✅ Si on n’a pas pu mettre la PK, on n’insère pas (sinon erreur SQL)
+        if (!values.containsKey("id_staff") && !values.containsKey("id_user")) return;
+
+        insertDynamic(cn, "staff", values);
     }
+
 
     private static void insertSecretaireIfPossible(Connection cn, long userId, String numCNSS, Double commission) throws SQLException {
         if (!tableExists(cn, "secretaire")) return;
 
         Map<String, Object> values = new LinkedHashMap<>();
 
-        if (columnExists(cn, "secretaire", "id_user")) values.put("id_user", userId);
-        else if (columnExists(cn, "secretaire", "id_secretaire")) values.put("id_secretaire", userId);
+        // ✅ PK/FK selon ta DB (on teste plusieurs variantes)
+        if (columnExists(cn, "secretaire", "id_secretaire")) values.put("id_secretaire", userId);
+        else if (columnExists(cn, "secretaire", "id_staff")) values.put("id_staff", userId);
+        else if (columnExists(cn, "secretaire", "id_user")) values.put("id_user", userId);
 
         if (columnExists(cn, "secretaire", "num_cnss")) values.put("num_cnss", numCNSS);
         if (columnExists(cn, "secretaire", "commission")) values.put("commission", commission);
 
-        if (!values.isEmpty()) insertDynamic(cn, "secretaire", values);
+        // ✅ Sans identifiant PK/FK => on ne tente pas l'insert
+        if (!values.containsKey("id_secretaire") && !values.containsKey("id_staff") && !values.containsKey("id_user")) return;
+
+        insertDynamic(cn, "secretaire", values);
     }
+
 
     // ---------- Generic SQL helpers ----------
 

@@ -23,4 +23,6 @@ public interface RevenuesRepository extends CrudRepository<Revenues, Long> {
 
     // ---- Relations optionnelles ----
     CabinetMedical getCabinetOfRevenue(Long revenueId);
+
+    
 }

@@ -1,6 +1,7 @@
 package ma.dentalTech.repository.test;
 
 import ma.dentalTech.configuration.ApplicationContext;
+import ma.dentalTech.entities.enums.CategorieAntecedent;
 import ma.dentalTech.entities.patient.Antecedent;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.entities.enums.NiveauRisque;
@@ -62,7 +63,7 @@ public class TestRepo {
         // 4) créer 2 antécédents
         Antecedent a1 = new Antecedent();
         a1.setNom("Diabète");
-        a1.setCategorie("CHRONIQUE"); // adapte selon ton type (String/Enum)
+        a1.setCategorie(CategorieAntecedent.valueOf("CHRONIQUE")); // adapte selon ton type (String/Enum)
         a1.setNiveauDeRisque(NiveauRisque.ELEVE);
         a1.setCreePar(login);
         a1.setModifiePar(login);
@@ -70,7 +71,7 @@ public class TestRepo {
 
         Antecedent a2 = new Antecedent();
         a2.setNom("Allergie anesthésie");
-        a2.setCategorie("ALLERGIE");
+        a2.setCategorie(CategorieAntecedent.valueOf("ALLERGIE"));
         a2.setNiveauDeRisque(NiveauRisque.CRITIQUE);
         a2.setCreePar(login);
         a2.setModifiePar(login);

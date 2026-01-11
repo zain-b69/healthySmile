@@ -28,4 +28,8 @@ public interface RDVRepository extends CrudRepository<RDV, Long> {
     long count();
 
     List<RDV> findPage(int limit, int offset);
+
+    void confirmer(Long idRdv);
+
+    void annuler(Long idRdv);
 }

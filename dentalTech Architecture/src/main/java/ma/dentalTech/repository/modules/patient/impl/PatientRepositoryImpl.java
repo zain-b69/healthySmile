@@ -67,37 +67,70 @@ public class PatientRepositoryImpl implements PatientRepository {
 
     @Override
     public void create(Patient p) {
+        System.out.println(">>> PatientRepositoryImpl.CREATE RUNNING (v2) " + this.getClass().getName());
         if (p == null) throw new IllegalArgumentException("Patient is null");
 
         try {
+            Connection c = cn(); // ⚠️ ne pas fermer (singleton)
+
             Long idEntite = insertEntiteIfNeeded(p);
+            if (idEntite == null || idEntite == 0L) {
+                throw new IllegalStateException("idEntite is null/0 after insertEntiteIfNeeded");
+            }
 
             String sql = """
-                INSERT INTO patient (id_entite, nom, date_de_naissance, sexe, adresse, telephone, assurance)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """;
+            INSERT INTO patient (id_entite, nom, date_de_naissance, sexe, adresse, telephone, assurance)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """;
 
-            try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setObject(1, idEntite, Types.BIGINT);
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setLong(1, idEntite);
                 ps.setString(2, p.getNom());
-                ps.setDate(3, p.getDateNaissance() != null ? Date.valueOf(p.getDateNaissance()) : null);
+                ps.setDate(3, Date.valueOf(p.getDateNaissance())); // NOT NULL en DB
                 ps.setString(4, p.getSexe() != null ? p.getSexe().name() : null);
                 ps.setString(5, p.getAdresse());
                 ps.setString(6, p.getTelephone());
                 ps.setString(7, p.getAssurance() != null ? p.getAssurance().name() : null);
 
                 ps.executeUpdate();
-
-                try (ResultSet keys = ps.getGeneratedKeys()) {
-                    if (keys.next()) p.setIdPatient(keys.getLong(1));
-                }
-
-                p.setId(idEntite); // BaseEntity.id = id_entite
             }
+
+            Long idPatient = null;
+            try (PreparedStatement ps2 = c.prepareStatement("SELECT LAST_INSERT_ID()");
+                 ResultSet rs = ps2.executeQuery()) {
+                if (rs.next()) idPatient = rs.getLong(1);
+            }
+
+            // fallback final par id_entite (au cas où)
+            if (idPatient == null || idPatient == 0L) {
+                try (PreparedStatement ps3 = c.prepareStatement(
+                        "SELECT id_patient FROM patient WHERE id_entite = ? LIMIT 1"
+                )) {
+                    ps3.setLong(1, idEntite);
+                    try (ResultSet rs = ps3.executeQuery()) {
+                        if (rs.next()) idPatient = rs.getLong(1);
+                    }
+                }
+            }
+
+            if (idPatient == null || idPatient == 0L) {
+                throw new IllegalStateException("Insert patient OK but cannot retrieve id_patient");
+            }
+
+            p.setIdPatient(idPatient);
+            p.setId(idEntite);
+
+            // DEBUG (temporaire)
+            System.out.println("DEBUG repo.create: idEntite=" + p.getId() + " idPatient=" + p.getIdPatient());
+
         } catch (SQLException ex) {
             throw new RuntimeException("Patient.create failed", ex);
         }
     }
+
+
+
+
 
     @Override
     public void update(Patient p) {
@@ -359,22 +392,38 @@ public class PatientRepositoryImpl implements PatientRepository {
     // =========================
 
     private Long insertEntiteIfNeeded(Patient p) throws SQLException {
+        System.out.println(">>> insertEntiteIfNeeded called, creePar=" + p.getCreePar());
         if (p.getId() != null) return p.getId();
 
-        String sql = """
-            INSERT INTO entite (date_creation, date_derniere_modification, cree_par, modifie_par)
-            VALUES (CURRENT_DATE, CURRENT_TIMESTAMP, ?, ?)
-            """;
+        Connection c = cn(); // ⚠️ ne pas fermer (singleton)
 
-        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String sql = """
+        INSERT INTO entite (date_creation, date_derniere_modification, cree_par, modifie_par)
+        VALUES (CURRENT_DATE, CURRENT_TIMESTAMP, ?, ?)
+        """;
+
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, p.getCreePar());
             ps.setString(2, p.getModifiePar());
             ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                return keys.next() ? keys.getLong(1) : null;
-            }
         }
+
+        Long idEntite = null;
+        try (PreparedStatement ps2 = c.prepareStatement("SELECT LAST_INSERT_ID()");
+             ResultSet rs = ps2.executeQuery()) {
+            if (rs.next()) idEntite = rs.getLong(1);
+        }
+
+        if (idEntite == null || idEntite == 0L) {
+            throw new IllegalStateException("Insert entite OK but LAST_INSERT_ID() returned null/0");
+        }
+
+        p.setId(idEntite);
+        return idEntite;
     }
+
+
+
 
     private void updateEntiteTouch(Long idEntite, String modifiePar) throws SQLException {
         if (idEntite == null) return;

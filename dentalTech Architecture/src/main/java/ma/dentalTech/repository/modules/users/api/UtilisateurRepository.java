@@ -20,4 +20,6 @@ public interface UtilisateurRepository extends CrudRepository<Utilisateur, Long>
     // utilisateur.id_role (1 seul rôle)
     Optional<Role> findRoleByUserId(Long idUser);
     void updateRole(Long idUser, Long idRole);
+    void updatePassword(Long idUser, String hashedPassword);
+
 }

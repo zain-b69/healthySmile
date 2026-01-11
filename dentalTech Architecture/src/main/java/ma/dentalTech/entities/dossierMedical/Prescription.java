@@ -37,5 +37,6 @@ public class Prescription extends BaseEntity {
     }
 
     public List<PrescriptionMedicament> getPrescriptionMedicaments() {
+        return new ArrayList<>();
     }
 }

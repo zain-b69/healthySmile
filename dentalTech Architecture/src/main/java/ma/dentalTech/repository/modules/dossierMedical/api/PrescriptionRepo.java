@@ -30,4 +30,7 @@ public interface PrescriptionRepo extends CrudRepository<Prescription, Long> {
     long count();
 
     List<Prescription> findPage(int limit, int offset);
+
+    boolean updateQuantiteMedicament(Long idPr, Long idMct, Integer quantite);
+
 }

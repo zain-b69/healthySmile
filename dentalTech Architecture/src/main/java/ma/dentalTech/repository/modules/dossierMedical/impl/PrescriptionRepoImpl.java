@@ -355,4 +355,30 @@ public class PrescriptionRepoImpl implements PrescriptionRepo {
         } catch (SQLException ignored) {
         }
     }
+
+    @Override
+    public boolean updateQuantiteMedicament(Long idPr, Long idMct, Integer quantite) {
+        String sql = """
+        UPDATE prescription_medicament
+        SET quantite = ?
+        WHERE id_pr = ? AND id_mct = ?
+        """;
+
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+            if (quantite == null) ps.setNull(1, Types.INTEGER);
+            else ps.setInt(1, quantite);
+
+            ps.setLong(2, idPr);
+            ps.setLong(3, idMct);
+
+            int updated = ps.executeUpdate();
+            return updated > 0;
+
+        } catch (SQLException ex) {
+            throw new RuntimeException("Prescription.updateQuantiteMedicament failed", ex);
+        }
+    }
+
+
+
 }

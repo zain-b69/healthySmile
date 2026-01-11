@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Impl JDBC pour SituationFinanciere.
+ * Impl JDBC pour SituationFinanciere (compatible DB sans colonne en_promo).
  */
 public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
 
@@ -34,8 +34,10 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
             """;
 
         List<SituationFinanciere> out = new ArrayList<>();
-        try (PreparedStatement ps = cn().prepareStatement(sql);
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
+
             while (rs.next()) out.add(RowMappers.mapSituationFinanciere(rs));
         } catch (SQLException ex) {
             throw new RuntimeException("SituationFinanciere.findAll failed", ex);
@@ -46,6 +48,7 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
     @Override
     public SituationFinanciere findById(Long id) {
         if (id == null) return null;
+
         String sql = """
             SELECT sf.*,
                    e.date_creation, e.date_derniere_modification, e.cree_par, e.modifie_par
@@ -53,7 +56,10 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
             LEFT JOIN entite e ON e.id_entite = sf.id_entite
             WHERE sf.id_sf = ?
             """;
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? RowMappers.mapSituationFinanciere(rs) : null;
@@ -66,28 +72,35 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
     @Override
     public void create(SituationFinanciere sf) {
         if (sf == null) throw new IllegalArgumentException("SituationFinanciere is null");
-        try {
-            Long idEntite = insertEntiteIfNeeded(sf.getCreePar(), sf.getModifiePar(), sf.getId());
 
-            String sql = """
-                INSERT INTO situation_financiere (
-                    id_entite, totale_des_actes, totale_paye, credit, statut, en_promo, id_dm
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                """;
+        String sql = """
+            INSERT INTO situation_financiere (
+                id_entite, totale_des_actes, totale_paye, credit, statut, id_dm
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """;
 
-            try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection c = cn()) {
+            Long idEntite = insertEntiteIfNeeded(c, sf.getCreePar(), sf.getModifiePar(), sf.getId());
+
+            // DB sans en_promo > on persiste uniquement statut
+            StatutSituationFinanciere statutToPersist = deriveStatutToPersist(sf);
+            sf.setStatut(statutToPersist);
+            sf.setEnPromo(statutToPersist == StatutSituationFinanciere.EN_PROMO);
+
+            try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setObject(1, idEntite, Types.BIGINT);
                 ps.setObject(2, sf.getTotaleDesActes(), Types.DOUBLE);
                 ps.setObject(3, sf.getTotalePaye(), Types.DOUBLE);
                 ps.setObject(4, sf.getCredit(), Types.DOUBLE);
-                ps.setString(5, sf.getStatut() != null ? sf.getStatut().name() : null);
-                ps.setObject(6, sf.getEnPromo(), Types.BOOLEAN);
-                ps.setObject(7, sf.getIdDm(), Types.BIGINT);
+                ps.setString(5, statutToPersist != null ? statutToPersist.name() : null);
+                ps.setObject(6, sf.getIdDm(), Types.BIGINT);
 
                 ps.executeUpdate();
                 try (ResultSet keys = ps.getGeneratedKeys()) {
                     if (keys.next()) sf.setIdSf(keys.getLong(1));
                 }
+
+                // BaseEntity.id = id_entite
                 sf.setId(idEntite);
             }
         } catch (SQLException ex) {
@@ -106,27 +119,33 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
                 totale_paye = ?,
                 credit = ?,
                 statut = ?,
-                en_promo = ?,
                 id_dm = ?
             WHERE id_sf = ?
             """;
 
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        // DB sans en_promo => statut seulement
+        StatutSituationFinanciere statutToPersist = deriveStatutToPersist(sf);
+        sf.setStatut(statutToPersist);
+        sf.setEnPromo(statutToPersist == StatutSituationFinanciere.EN_PROMO);
+
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setObject(1, sf.getTotaleDesActes(), Types.DOUBLE);
             ps.setObject(2, sf.getTotalePaye(), Types.DOUBLE);
             ps.setObject(3, sf.getCredit(), Types.DOUBLE);
-            ps.setString(4, sf.getStatut() != null ? sf.getStatut().name() : null);
-            ps.setObject(5, sf.getEnPromo(), Types.BOOLEAN);
-            ps.setObject(6, sf.getIdDm(), Types.BIGINT);
-            ps.setLong(7, sf.getIdSf());
+            ps.setString(4, statutToPersist != null ? statutToPersist.name() : null);
+            ps.setObject(5, sf.getIdDm(), Types.BIGINT);
+            ps.setLong(6, sf.getIdSf());
 
             ps.executeUpdate();
-            updateEntiteTouch(sf.getId(), sf.getModifiePar());
+            updateEntiteTouch(c, sf.getId(), sf.getModifiePar());
+
         } catch (SQLException ex) {
             throw new RuntimeException("SituationFinanciere.update failed", ex);
         }
     }
-    
+
     @Override
     public void delete(SituationFinanciere sf) {
         if (sf == null) return;
@@ -138,15 +157,20 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
         if (id == null) return;
 
         SituationFinanciere sf = findById(id);
+
         String sql = "DELETE FROM situation_financiere WHERE id_sf = ?";
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (SQLException ex) {
             throw new RuntimeException("SituationFinanciere.deleteById failed", ex);
         }
 
-        if (sf != null && sf.getId() != null) deleteEntite(sf.getId());
+        if (sf != null && sf.getId() != null) {
+            deleteEntite(sf.getId());
+        }
     }
 
     // =========================
@@ -163,7 +187,10 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
             WHERE sf.id_dm = ?
             LIMIT 1
             """;
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setObject(1, idDm, Types.BIGINT);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? RowMappers.mapSituationFinanciere(rs) : null;
@@ -183,8 +210,11 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
             WHERE sf.statut = ?
             ORDER BY sf.id_sf DESC
             """;
+
         List<SituationFinanciere> out = new ArrayList<>();
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setString(1, statut != null ? statut.name() : null);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(RowMappers.mapSituationFinanciere(rs));
@@ -198,7 +228,9 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
     @Override
     public boolean existsById(Long id) {
         String sql = "SELECT 1 FROM situation_financiere WHERE id_sf = ? LIMIT 1";
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -211,8 +243,10 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
     @Override
     public long count() {
         String sql = "SELECT COUNT(*) FROM situation_financiere";
-        try (PreparedStatement ps = cn().prepareStatement(sql);
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
+
             rs.next();
             return rs.getLong(1);
         } catch (SQLException ex) {
@@ -230,8 +264,11 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
             ORDER BY sf.id_sf
             LIMIT ? OFFSET ?
             """;
+
         List<SituationFinanciere> out = new ArrayList<>();
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setInt(1, limit);
             ps.setInt(2, offset);
             try (ResultSet rs = ps.executeQuery()) {
@@ -244,17 +281,36 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
     }
 
     // =========================
-    // Helpers entite
+    // Helpers
     // =========================
 
-    private Long insertEntiteIfNeeded(String creePar, String modifiePar, Long existingIdEntite) throws SQLException {
+    /**
+     * DB n'a pas en_promo > promo est représentée par statut = EN_PROMO.
+     * On dérive un statut cohérent si null.
+     */
+    private StatutSituationFinanciere deriveStatutToPersist(SituationFinanciere sf) {
+        if (sf == null) return null;
+
+        if (sf.getStatut() != null) return sf.getStatut();
+
+        // si l'objet possède un flag enPromo, on le convertit en statut
+        if (Boolean.TRUE.equals(sf.getEnPromo())) return StatutSituationFinanciere.EN_PROMO;
+
+        Double credit = sf.getCredit();
+        if (credit != null && credit > 0.000001) return StatutSituationFinanciere.EN_CREDIT;
+
+        return StatutSituationFinanciere.EN_REGLE;
+    }
+
+    private Long insertEntiteIfNeeded(Connection c, String creePar, String modifiePar, Long existingIdEntite) throws SQLException {
         if (existingIdEntite != null) return existingIdEntite;
 
         String sql = """
             INSERT INTO entite (date_creation, date_derniere_modification, cree_par, modifie_par)
             VALUES (CURRENT_DATE, CURRENT_TIMESTAMP, ?, ?)
             """;
-        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+        try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, creePar);
             ps.setString(2, modifiePar);
             ps.executeUpdate();
@@ -264,15 +320,17 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
         }
     }
 
-    private void updateEntiteTouch(Long idEntite, String modifiePar) throws SQLException {
+    private void updateEntiteTouch(Connection c, Long idEntite, String modifiePar) throws SQLException {
         if (idEntite == null) return;
+
         String sql = """
             UPDATE entite
             SET date_derniere_modification = CURRENT_TIMESTAMP,
                 modifie_par = ?
             WHERE id_entite = ?
             """;
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, modifiePar);
             ps.setLong(2, idEntite);
             ps.executeUpdate();
@@ -281,7 +339,9 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
 
     private void deleteEntite(Long idEntite) {
         String sql = "DELETE FROM entite WHERE id_entite = ?";
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, idEntite);
             ps.executeUpdate();
         } catch (SQLException ignored) {

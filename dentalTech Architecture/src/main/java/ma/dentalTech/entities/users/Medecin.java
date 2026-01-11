@@ -36,6 +36,6 @@ public class Medecin extends Staff {
                 nom = '%s',
                 specialite = '%s'
             }
-            """.formatted(getId(), getNom(), specialite);
+            """.formatted(getIdUser(), getNom(), specialite);
     }
 }

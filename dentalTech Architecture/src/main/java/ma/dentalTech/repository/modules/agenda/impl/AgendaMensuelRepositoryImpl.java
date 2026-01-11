@@ -13,13 +13,22 @@ import java.util.Optional;
 
 public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
 
+    // ========== AJOUTER CES 2 LIGNES ==========
+    private final SessionFactory sessionFactory = SessionFactory.getInstance();
+
+    private Connection cn() throws SQLException {
+        return sessionFactory.getConnection();
+    }
+    // ==========================================
+
     // -------- CRUD --------
     @Override
     public List<AgendaMensuel> findAll() {
         String sql = "SELECT * FROM agenda ORDER BY annee, mois, id_medecin";
         List<AgendaMensuel> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) out.add(RowMappers.mapAgendaMensuel(rs));
         } catch (SQLException e) {
@@ -31,8 +40,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public AgendaMensuel findById(Long id) {
         String sql = "SELECT * FROM agenda WHERE id_agenda = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return RowMappers.mapAgendaMensuel(rs);
@@ -46,12 +56,14 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public void create(AgendaMensuel agenda) {
         String sql = "INSERT INTO agenda(mois, annee, id_medecin) VALUES (?, ?, ?)";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, agenda.getMois());
             ps.setInt(2, agenda.getAnnee());
             ps.setLong(3, agenda.getIdMedecin());
             ps.executeUpdate();
+
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) agenda.setIdAgenda(keys.getLong(1));
             }
@@ -63,8 +75,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public void update(AgendaMensuel agenda) {
         String sql = "UPDATE agenda SET mois = ?, annee = ?, id_medecin = ? WHERE id_agenda = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setInt(1, agenda.getMois());
             ps.setInt(2, agenda.getAnnee());
             ps.setLong(3, agenda.getIdMedecin());
@@ -83,8 +96,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public void deleteById(Long id) {
         String sql = "DELETE FROM agenda WHERE id_agenda = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -96,8 +110,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public Optional<AgendaMensuel> findByMedecinAndMoisAndAnnee(Long idMedecin, Integer mois, Integer annee) {
         String sql = "SELECT * FROM agenda WHERE id_medecin = ? AND mois = ? AND annee = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, idMedecin);
             ps.setInt(2, mois);
             ps.setInt(3, annee);
@@ -114,8 +129,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     public List<AgendaMensuel> findByMedecin(Long idMedecin) {
         String sql = "SELECT * FROM agenda WHERE id_medecin = ?";
         List<AgendaMensuel> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, idMedecin);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(RowMappers.mapAgendaMensuel(rs));
@@ -129,8 +145,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public boolean existsById(Long id) {
         String sql = "SELECT 1 FROM agenda WHERE id_agenda = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -143,8 +160,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public long count() {
         String sql = "SELECT COUNT(*) FROM agenda";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             rs.next();
             return rs.getLong(1);
@@ -157,8 +175,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     public List<AgendaMensuel> findPage(int limit, int offset) {
         String sql = "SELECT * FROM agenda ORDER BY annee, mois LIMIT ? OFFSET ?";
         List<AgendaMensuel> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setInt(1, limit);
             ps.setInt(2, offset);
             try (ResultSet rs = ps.executeQuery()) {
@@ -175,8 +194,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     public List<LocalDate> getJoursNonDisponibles(Long agendaId) {
         String sql = "SELECT date_non_disponible FROM agenda_jours_non_disponibles WHERE id_agenda = ?";
         List<LocalDate> out = new ArrayList<>();
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, agendaId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(rs.getDate("date_non_disponible").toLocalDate());
@@ -190,8 +210,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public void addJourNonDisponible(Long agendaId, LocalDate date) {
         String sql = "INSERT INTO agenda_jours_non_disponibles(id_agenda, date_non_disponible) VALUES(?, ?)";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, agendaId);
             ps.setDate(2, Date.valueOf(date));
             ps.executeUpdate();
@@ -203,8 +224,9 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public void removeJourNonDisponible(Long agendaId, LocalDate date) {
         String sql = "DELETE FROM agenda_jours_non_disponibles WHERE id_agenda = ? AND date_non_disponible = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, agendaId);
             ps.setDate(2, Date.valueOf(date));
             ps.executeUpdate();
@@ -216,12 +238,14 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     @Override
     public void clearJoursNonDisponibles(Long agendaId) {
         String sql = "DELETE FROM agenda_jours_non_disponibles WHERE id_agenda = ?";
-        try (Connection c = SessionFactory.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        // MODIFIER : enlever Connection du try
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, agendaId);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+
 }

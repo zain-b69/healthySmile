@@ -21,6 +21,16 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
         return sessionFactory.getConnection();
     }
 
+    private static String toDbNiveau(NiveauRisque n) {
+        if (n == null) return null;
+        return switch (n) {
+            case FAIBLE -> "FAIBLE";
+            case MOYEN -> "MOYEN";      // ✅ si DB a MOYEN
+            case ELEVE -> "ELEVE";
+            case CRITIQUE -> "CRITIQUE"; // ✅ si DB a CRITIQUE, sinon map vers ELEVE
+        };
+    }
+
     // =========================
     // CRUD
     // =========================
@@ -89,8 +99,8 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
                 ps.setString(3, cat != null ? cat.toString() : null);
 
                 // niveau_de_risque = enum(...)
-                NiveauRisque nr = a.getNiveauDeRisque();
-                ps.setString(4, nr != null ? nr.name() : null);
+                ps.setString(4, toDbNiveau(a.getNiveauDeRisque()));
+
 
                 ps.executeUpdate();
 

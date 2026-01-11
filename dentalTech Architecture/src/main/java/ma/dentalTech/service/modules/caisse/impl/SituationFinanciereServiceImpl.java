@@ -24,7 +24,8 @@ public class SituationFinanciereServiceImpl implements SituationFinanciereServic
 
     @Override
     public SituationFinanciere consulterParDossier(long idDm) {
-        return repo.findByDossierMedicalId(idDm).orElse(null);
+//        return repo.findByDossierMedicalId(idDm).orElse(null);
+        return null;
     }
 
     @Override
@@ -51,53 +52,20 @@ public class SituationFinanciereServiceImpl implements SituationFinanciereServic
 
     @Override
     public SituationFinanciere recalculerEtMettreAJour(long idDm) {
-        SituationFinanciere sf = getOuCreerPourDossier(idDm, false, "system");
-
-        double totalActes = repo.computeTotalActesPourDossier(idDm);
-        double totalPaye = repo.computeTotalPayePourSituation(sf.getIdSf());
-
-        boolean promo = sf.getEnPromo() != null && sf.getEnPromo();
-        double credit = calculerCredit(totalActes, totalPaye);
-
-        String statutDb = calcStatutDb(totalActes, totalPaye, credit);
-        String enPromoDb = promo ? "OUI" : "NON";
-
-        repo.updateTotauxEtStatut(sf.getIdSf(), totalActes, totalPaye, credit, statutDb, enPromoDb);
-        return repo.findById(sf.getIdSf());
+//
+        return null;
     }
 
     @Override
     public SituationFinanciere appliquerPromotion(long idSf, double pourcentageRemise) {
-        SituationFinanciere sf = repo.findById(idSf);
-        if (sf == null) return null;
-
-        double remise = Math.max(0.0, Math.min(100.0, pourcentageRemise));
-
-        // Recalc base totals
-        double totalActes = repo.computeTotalActesPourDossier(sf.getIdDm());
-        if (remise > 0.0) {
-            totalActes = totalActes * (1.0 - (remise / 100.0));
-        }
-        double totalPaye = repo.computeTotalPayePourSituation(idSf);
-        double credit = calculerCredit(totalActes, totalPaye);
-
-        repo.updateTotauxEtStatut(idSf, totalActes, totalPaye, credit, calcStatutDb(totalActes, totalPaye, credit), "OUI");
-        return repo.findById(idSf);
+//
+        return null;
     }
 
     @Override
     public SituationFinanciere enregistrerPaiementManuel(long idSf, double montant) {
-        SituationFinanciere sf = repo.findById(idSf);
-        if (sf == null) return null;
-
-        double paiement = Math.max(0.0, montant);
-        double totalActes = sf.getTotaleDesActes() != null ? sf.getTotaleDesActes() : 0.0;
-        double totalPaye = (sf.getTotalePaye() != null ? sf.getTotalePaye() : 0.0) + paiement;
-        double credit = calculerCredit(totalActes, totalPaye);
-
-        boolean promo = sf.getEnPromo() != null && sf.getEnPromo();
-        repo.updateTotauxEtStatut(idSf, totalActes, totalPaye, credit, calcStatutDb(totalActes, totalPaye, credit), promo ? "OUI" : "NON");
-        return repo.findById(idSf);
+//
+        return null;
     }
 
     // ------------------- helpers -------------------

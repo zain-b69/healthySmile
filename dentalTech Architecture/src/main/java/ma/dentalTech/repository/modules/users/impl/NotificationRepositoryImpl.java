@@ -2,7 +2,6 @@ package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.base.BaseEntity;
-import ma.dentalTech.entities.enums.PrioriteNotification;
 import ma.dentalTech.entities.enums.TitreNotification;
 import ma.dentalTech.entities.enums.TypeNotification;
 import ma.dentalTech.entities.users.Notification;
@@ -38,13 +37,16 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             """;
 
         List<Notification> out = new ArrayList<>();
-        try (PreparedStatement ps = cn().prepareStatement(sql);
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
+
             while (rs.next()) out.add(RowMappers.mapNotification(rs));
+            return out;
+
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.findAll failed", ex);
         }
-        return out;
     }
 
     @Override
@@ -57,11 +59,14 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             WHERE n.id_notification = ?
             """;
 
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? RowMappers.mapNotification(rs) : null;
             }
+
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.findById failed", ex);
         }
@@ -74,38 +79,42 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         Long userId = extractUtilisateurId(n.getUtilisateur());
         if (userId == null) throw new IllegalArgumentException("Notification.utilisateur.idUser is required");
 
-        try {
-            Long idEntite = insertEntiteIfNeeded(n);
+        String sql = """
+            INSERT INTO notification (id_entite, id_utilisateur, titre, message, type_notification, date_notification, lu)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """;
 
-            String sql = """
-                INSERT INTO notification (id_entite, id_utilisateur, titre, message, type_notification, date_notification, lu)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """;
+        try (Connection c = cn()) {
+            c.setAutoCommit(false);
+            try {
+                Long idEntite = insertEntiteIfNeeded(c, n);
 
-            try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setObject(1, idEntite, Types.BIGINT);
-                ps.setLong(2, userId);
-                ps.setString(3, n.getTitre() != null ? n.getTitre().name() : null);
-                ps.setString(4, n.getMessage());
-                ps.setString(5, n.getType() != null ? n.getType().name() : null);
+                try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setObject(1, idEntite, Types.BIGINT);
+                    ps.setLong(2, userId);
+                    ps.setString(3, n.getTitre() != null ? n.getTitre().name() : null);
+                    ps.setString(4, n.getMessage());
+                    ps.setString(5, n.getType() != null ? n.getType().name() : null);
+                    ps.setTimestamp(6, toTimestampOrNow(n.getDate(), n.getTime()));
+                    ps.setBoolean(7, n.isLue());
 
-                // date_notification NOT NULL => on met "maintenant" si date/time pas fournis
-                Timestamp ts = toTimestampOrNow(n.getDate(), n.getTime());
-                ps.setTimestamp(6, ts);
+                    ps.executeUpdate();
 
-                ps.setBoolean(7, n.isLue());
-
-                ps.executeUpdate();
-
-                // Stocker la PK si ton entity a setIdNotification(Long)
-                try (ResultSet keys = ps.getGeneratedKeys()) {
-                    if (keys.next()) setNotificationPkIfPresent(n, keys.getLong(1));
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (keys.next()) n.setIdNotification(keys.getLong(1));
+                    }
                 }
 
                 // BaseEntity.id = id_entite
                 n.setId(idEntite);
-            }
 
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            } finally {
+                c.setAutoCommit(true);
+            }
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.create failed", ex);
         }
@@ -115,9 +124,8 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public void update(Notification n) {
         if (n == null) return;
 
-        Long notificationId = extractNotificationPk(n);
-        if (notificationId == null) {
-            throw new IllegalArgumentException("Notification PK missing (add field idNotification + getter/setter OR ensure it's set)");
+        if (n.getIdNotification() == null) {
+            throw new IllegalArgumentException("Notification.idNotification (PK) is required for update");
         }
 
         Long userId = extractUtilisateurId(n.getUtilisateur());
@@ -134,20 +142,22 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             WHERE id_notification = ?
             """;
 
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, userId);
             ps.setString(2, n.getTitre() != null ? n.getTitre().name() : null);
             ps.setString(3, n.getMessage());
             ps.setString(4, n.getType() != null ? n.getType().name() : null);
             ps.setTimestamp(5, toTimestampOrNow(n.getDate(), n.getTime()));
             ps.setBoolean(6, n.isLue());
-            ps.setLong(7, notificationId);
+            ps.setLong(7, n.getIdNotification());
 
             ps.executeUpdate();
 
-            // audit (si entite existe)
-            Long idEntite = (n.getId() != null) ? n.getId() : findEntiteIdByNotificationId(notificationId);
-            updateEntiteTouch(idEntite, n.getModifiePar());
+            // audit entite (si on a id_entite)
+            Long idEntite = (n.getId() != null) ? n.getId() : findEntiteIdByNotificationId(c, n.getIdNotification());
+            updateEntiteTouch(c, idEntite, n.getModifiePar());
 
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.update failed", ex);
@@ -157,24 +167,36 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     @Override
     public void delete(Notification n) {
         if (n == null) return;
-        Long notificationId = extractNotificationPk(n);
-        if (notificationId != null) deleteById(notificationId);
+        if (n.getIdNotification() != null) deleteById(n.getIdNotification());
     }
 
     @Override
     public void deleteById(Long id) {
-        Long idEntite = findEntiteIdByNotificationId(id);
+        if (id == null) return;
 
-        String sql = "DELETE FROM notification WHERE id_notification = ?";
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
-            ps.setLong(1, id);
-            ps.executeUpdate();
+        try (Connection c = cn()) {
+            c.setAutoCommit(false);
+            try {
+                Long idEntite = findEntiteIdByNotificationId(c, id);
+
+                try (PreparedStatement ps = c.prepareStatement("DELETE FROM notification WHERE id_notification = ?")) {
+                    ps.setLong(1, id);
+                    ps.executeUpdate();
+                }
+
+                // optionnel: supprimer entite après suppression notification
+                if (idEntite != null) deleteEntite(c, idEntite);
+
+                c.commit();
+            } catch (Exception ex) {
+                c.rollback();
+                throw ex;
+            } finally {
+                c.setAutoCommit(true);
+            }
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.deleteById failed", ex);
         }
-
-        // optionnel: supprimer entite après suppression notification
-        if (idEntite != null) deleteEntite(idEntite);
     }
 
     // -------------------- Méthodes spécifiques (NotificationRepository) --------------------
@@ -266,13 +288,14 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public void markAsRead(Long notificationId) {
         String sql = "UPDATE notification SET lu = 1 WHERE id_notification = ?";
 
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, notificationId);
             ps.executeUpdate();
 
-            // audit (optionnel)
-            Long idEntite = findEntiteIdByNotificationId(notificationId);
-            updateEntiteTouch(idEntite, "system");
+            Long idEntite = findEntiteIdByNotificationId(c, notificationId);
+            updateEntiteTouch(c, idEntite, "system");
 
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.markAsRead failed", ex);
@@ -283,9 +306,12 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public void markAllAsReadForUser(Long utilisateurId) {
         String sql = "UPDATE notification SET lu = 1 WHERE id_utilisateur = ? AND lu = 0";
 
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, utilisateurId);
             ps.executeUpdate();
+
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.markAllAsReadForUser failed", ex);
         }
@@ -299,22 +325,24 @@ public class NotificationRepositoryImpl implements NotificationRepository {
 
     private List<Notification> queryList(String sql, Binder binder) {
         List<Notification> out = new ArrayList<>();
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection c = cn();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
             binder.bind(ps);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(RowMappers.mapNotification(rs));
             }
+            return out;
+
         } catch (SQLException ex) {
             throw new RuntimeException("Notification query failed", ex);
         }
-        return out;
     }
 
     private Long extractUtilisateurId(Utilisateur u) {
         if (u == null) return null;
         if (u.getIdUser() != null) return u.getIdUser();
-        // fallback (si quelqu’un met BaseEntity.id à la place)
-        return u.getId();
+        return u.getId(); // fallback si quelqu’un utilise BaseEntity.id
     }
 
     private Timestamp toTimestampOrNow(LocalDate d, LocalTime t) {
@@ -325,39 +353,19 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         return Timestamp.valueOf(ldt);
     }
 
-    private Long extractNotificationPk(Notification n) {
-        try {
-            // si Notification a getIdNotification()
-            Object v = n.getClass().getMethod("getIdNotification").invoke(n);
-            return (v instanceof Long) ? (Long) v : null;
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private void setNotificationPkIfPresent(Notification n, long pk) {
-        try {
-            n.getClass().getMethod("setIdNotification", Long.class).invoke(n, pk);
-        } catch (Exception ignored) {
-            // si l'entity ne possède pas idNotification, on ignore (mais update/delete auront besoin de la PK)
-        }
-    }
-
-    private Long findEntiteIdByNotificationId(Long notificationId) {
+    private Long findEntiteIdByNotificationId(Connection c, Long notificationId) throws SQLException {
         if (notificationId == null) return null;
 
         String sql = "SELECT id_entite FROM notification WHERE id_notification = ?";
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, notificationId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getObject("id_entite", Long.class) : null;
             }
-        } catch (SQLException ex) {
-            return null;
         }
     }
 
-    private Long insertEntiteIfNeeded(BaseEntity e) throws SQLException {
+    private Long insertEntiteIfNeeded(Connection c, BaseEntity e) throws SQLException {
         if (e.getId() != null) return e.getId();
 
         String sql = """
@@ -365,10 +373,11 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             VALUES (CURRENT_DATE, CURRENT_TIMESTAMP, ?, ?)
             """;
 
-        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, e.getCreePar());
             ps.setString(2, e.getModifiePar());
             ps.executeUpdate();
+
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return keys.getLong(1);
                 return null;
@@ -376,7 +385,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         }
     }
 
-    private void updateEntiteTouch(Long idEntite, String modifiePar) throws SQLException {
+    private void updateEntiteTouch(Connection c, Long idEntite, String modifiePar) throws SQLException {
         if (idEntite == null) return;
 
         String sql = """
@@ -386,20 +395,18 @@ public class NotificationRepositoryImpl implements NotificationRepository {
             WHERE id_entite = ?
             """;
 
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, modifiePar);
             ps.setLong(2, idEntite);
             ps.executeUpdate();
         }
     }
 
-    private void deleteEntite(Long idEntite) {
-        String sql = "DELETE FROM entite WHERE id_entite = ?";
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+    private void deleteEntite(Connection c, Long idEntite) throws SQLException {
+        if (idEntite == null) return;
+        try (PreparedStatement ps = c.prepareStatement("DELETE FROM entite WHERE id_entite = ?")) {
             ps.setLong(1, idEntite);
             ps.executeUpdate();
-        } catch (SQLException ignored) {
-            // parfois FK bloque -> on ignore
         }
     }
 }

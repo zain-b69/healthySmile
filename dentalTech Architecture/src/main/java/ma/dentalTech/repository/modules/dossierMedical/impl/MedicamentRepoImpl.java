@@ -1,5 +1,6 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.dossierMedical.Medicament;
 import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepo;
 
@@ -11,10 +12,19 @@ import java.util.Optional;
 
 public class MedicamentRepoImpl implements MedicamentRepo {
 
-    private final DataSource dataSource;
+    private DataSource dataSource; // optionnel
+    private final SessionFactory sessionFactory = SessionFactory.getInstance();
+
+    public MedicamentRepoImpl() {
+    }
 
     public MedicamentRepoImpl(DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    private Connection cn() throws SQLException {
+        if (dataSource != null) return dataSource.getConnection();
+        return sessionFactory.getConnection();
     }
 
     @Override
@@ -23,7 +33,7 @@ public class MedicamentRepoImpl implements MedicamentRepo {
                 "INSERT INTO medicament (nom, laboratoire, type, forme, remboursable, prix_unitaire, description) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, m.getNom());
@@ -59,7 +69,7 @@ public class MedicamentRepoImpl implements MedicamentRepo {
                 "UPDATE medicament SET nom=?, laboratoire=?, type=?, forme=?, remboursable=?, prix_unitaire=?, description=? " +
                         "WHERE id_mct=?";
 
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setString(1, m.getNom());
@@ -106,7 +116,7 @@ public class MedicamentRepoImpl implements MedicamentRepo {
     public boolean deleteById(Long idMct) {
         final String sql = "DELETE FROM medicament WHERE id_mct=?";
 
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, idMct);
@@ -160,7 +170,7 @@ public class MedicamentRepoImpl implements MedicamentRepo {
     }
 
     private Optional<Medicament> queryOne(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             binder.bind(ps);
@@ -176,7 +186,7 @@ public class MedicamentRepoImpl implements MedicamentRepo {
     }
 
     private List<Medicament> queryList(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             binder.bind(ps);
@@ -208,8 +218,6 @@ public class MedicamentRepoImpl implements MedicamentRepo {
         m.setPrixUnitaire(rs.wasNull() ? null : prix);
 
         m.setDescription(rs.getString("description"));
-
-        // N..N prescriptions non chargées ici
         m.setPrescriptions(new ArrayList<>());
 
         return m;

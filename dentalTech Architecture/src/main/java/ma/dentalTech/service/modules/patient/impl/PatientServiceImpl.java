@@ -26,19 +26,17 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     public Patient findById(Long id) {
+        if (id == null) throw new IllegalArgumentException("id is null");
         return repo.findById(id);
     }
 
     @Override
     public void create(Patient patient) throws SQLException {
-        if (patient == null) throw new IllegalArgumentException("patient is null");
         repo.create(patient);
     }
 
     @Override
     public void update(Patient patient) {
-        if (patient == null) throw new IllegalArgumentException("patient is null");
-        if (patient.getIdPatient() == null) throw new IllegalArgumentException("patient.idPatient is null");
         repo.update(patient);
     }
 
@@ -52,35 +50,29 @@ public class PatientServiceImpl implements PatientService {
         repo.deleteById(id);
     }
 
-    // ---- extra ----
-
     @Override
     public Optional<Patient> findByEmail(String email) {
-        if (email == null || email.isBlank()) return Optional.empty();
         return repo.findByEmail(email);
     }
 
     @Override
     public Optional<Patient> findByTelephone(String telephone) {
-        if (telephone == null || telephone.isBlank()) return Optional.empty();
         return repo.findByTelephone(telephone);
     }
 
     @Override
     public List<Patient> searchByNomPrenom(String keyword) {
-        if (keyword == null) keyword = "";
         return repo.searchByNomPrenom(keyword);
     }
 
     @Override
     public boolean existsById(Long id) {
-        if (id == null) return false;
         return repo.existsById(id);
     }
 
     @Override
     public long count() {
-        return repo.count();
+        return  repo.count();
     }
 
     @Override
@@ -88,30 +80,35 @@ public class PatientServiceImpl implements PatientService {
         return repo.findPage(limit, offset);
     }
 
-    // ---- Many-to-Many ----
-
     @Override
     public void addAntecedentToPatient(Long patientId, Long antecedentId) {
+        if (patientId == null) throw new IllegalArgumentException("patientId is null");
+        if (antecedentId == null) throw new IllegalArgumentException("antecedentId is null");
         repo.addAntecedentToPatient(patientId, antecedentId);
     }
 
     @Override
     public void removeAntecedentFromPatient(Long patientId, Long antecedentId) {
+        if (patientId == null) throw new IllegalArgumentException("patientId is null");
+        if (antecedentId == null) throw new IllegalArgumentException("antecedentId is null");
         repo.removeAntecedentFromPatient(patientId, antecedentId);
     }
 
     @Override
     public void removeAllAntecedentsFromPatient(Long patientId) {
+        if (patientId == null) throw new IllegalArgumentException("patientId is null");
         repo.removeAllAntecedentsFromPatient(patientId);
     }
 
     @Override
     public List<Antecedent> getAntecedentsOfPatient(Long patientId) {
+        if (patientId == null) throw new IllegalArgumentException("patientId is null");
         return repo.getAntecedentsOfPatient(patientId);
     }
 
     @Override
     public List<Patient> getPatientsByAntecedent(Long antecedentId) {
+        if (antecedentId == null) throw new IllegalArgumentException("antecedentId is null");
         return repo.getPatientsByAntecedent(antecedentId);
     }
 }

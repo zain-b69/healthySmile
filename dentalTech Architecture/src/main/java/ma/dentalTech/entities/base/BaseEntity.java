@@ -3,6 +3,7 @@ package ma.dentalTech.entities.base;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Classe de base pour toutes les entités du système.
@@ -11,6 +12,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 public abstract class BaseEntity {
 
     protected Long id;

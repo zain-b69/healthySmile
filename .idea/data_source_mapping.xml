@@ -4,9 +4,7 @@
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/eb49ef7b-1ee0-4302-98db-95091bbd832f/console.sql" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/eb49ef7b-1ee0-4302-98db-95091bbd832f/console_1.sql" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/eb49ef7b-1ee0-4302-98db-95091bbd832f/console_2.sql" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
-    <file url="file://$PROJECT_DIR$/dentalTech Architecture/src/main/java/ma/dentalTech/repository/modules/agenda/impl/RDVRepositoryImpl.java" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
-    <file url="file://$PROJECT_DIR$/dentalTech Architecture/src/main/java/ma/dentalTech/repository/modules/cabinet/impl/CabinetMedicalRepositoryImpl.java" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
-    <file url="file://$PROJECT_DIR$/dentalTech Architecture/src/main/java/ma/dentalTech/repository/modules/cabinet/impl/RevenuesRepositoryImpl.java" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
-    <file url="file://$PROJECT_DIR$/dentalTech Architecture/src/main/java/ma/dentalTech/repository/modules/cabinet/impl/StatistiquesRepositoryImpl.java" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
+    <file url="file://$PROJECT_DIR$/dentalTech Architecture/src/main/java/ma/dentalTech/repository/modules/agenda/impl/AgendaMensuelRepositoryImpl.java" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
+    <file url="file://$PROJECT_DIR$/dentalTech Architecture/src/main/java/ma/dentalTech/service/modules/agendas/impl/RDVServiceImpl.java" value="eb49ef7b-1ee0-4302-98db-95091bbd832f" />
   </component>
 </project>

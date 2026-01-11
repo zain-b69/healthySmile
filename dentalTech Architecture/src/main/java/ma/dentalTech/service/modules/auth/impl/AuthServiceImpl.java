@@ -125,4 +125,11 @@ public class AuthServiceImpl implements AuthService {
         Optional<Role> optRole = utilisateurRepository.findRoleByUserId(user.getIdUser());
         return optRole.map(Role::getType).orElse(null);
     }
+
+    private static final boolean DEBUG_AUTH = true;
+
+    private static void logAuth(String msg) {
+        if (DEBUG_AUTH) System.out.println("[AUTH] " + msg);
+    }
+
 }

@@ -3,6 +3,7 @@ package ma.dentalTech.entities.users;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import ma.dentalTech.entities.base.BaseEntity;
 import ma.dentalTech.entities.enums.PrioriteNotification;
 import ma.dentalTech.entities.enums.TitreNotification;
@@ -15,6 +16,7 @@ import ma.dentalTech.entities.enums.TypeNotification;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class Notification extends BaseEntity {
 
     private Long idNotification; // PK notification.id_notification
