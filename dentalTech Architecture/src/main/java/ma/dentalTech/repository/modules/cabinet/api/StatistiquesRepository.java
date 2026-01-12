@@ -22,4 +22,6 @@ public interface StatistiquesRepository extends CrudRepository<Statistiques, Lon
     long count();
 
     List<Statistiques> findPage(int limit, int offset);
+
+
 }

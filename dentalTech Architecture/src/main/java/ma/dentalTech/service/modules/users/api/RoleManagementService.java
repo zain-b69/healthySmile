@@ -18,6 +18,4 @@ public interface RoleManagementService {
     Role getRoleByType(RoleType type);
 
     List<Role> getAllRoles();
-
-    Role updateRolePrivileges(Long roleId, List<String> privileges);
 }

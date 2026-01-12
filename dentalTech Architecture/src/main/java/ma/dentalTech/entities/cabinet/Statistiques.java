@@ -2,6 +2,7 @@ package ma.dentalTech.entities.cabinet;
 
 import lombok.*;
 import ma.dentalTech.entities.base.BaseEntity;
+import ma.dentalTech.entities.enums.CategorieStatistique;
 
 import java.time.LocalDate;
 
@@ -33,6 +34,8 @@ public class Statistiques extends BaseEntity {
     private Double revenuTotal;
     private Double tauxAnnulation;
     private String actePlusEffectif;
+    private CategorieStatistique categorie;
+
 
     // Relation objet facultative
     @ToString.Exclude @EqualsAndHashCode.Exclude

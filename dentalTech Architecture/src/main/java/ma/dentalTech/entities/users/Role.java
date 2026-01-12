@@ -15,6 +15,7 @@ import ma.dentalTech.entities.enums.RoleType;
 @Builder
 public class Role extends BaseEntity {
 
+    private Long idRole; // PK role.id_role
     private RoleType type;
 
     @Override
