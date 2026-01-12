@@ -25,4 +25,6 @@ public interface DossierMedicalService {
 
     // ---- Optionnel : corriger la date de création (si prof veut) ----
     DossierMedical corrigerDateCreation(Long idDm, LocalDate nouvelleDate);
+
+    List<DossierMedical> listAll();
 }

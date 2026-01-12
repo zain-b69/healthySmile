@@ -3,10 +3,8 @@ package ma.dentalTech.configuration;
 import ma.dentalTech.mvc.controllers.modules.auth.api.AuthController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 
-import ma.dentalTech.repository.modules.dossierMedical.api.MedicamentRepo;
-import ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepo;
-import ma.dentalTech.repository.modules.dossierMedical.api.PrescriptionRepo;
-import ma.dentalTech.repository.modules.dossierMedical.api.SituationFinanciereRepo;
+import ma.dentalTech.repository.modules.dossierMedical.api.*;
+import ma.dentalTech.repository.modules.dossierMedical.impl.DossierMedicalRepoImpl;
 import ma.dentalTech.repository.modules.patient.api.AntecedentRepository;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.repository.modules.users.api.MedecinRepository;
@@ -17,8 +15,10 @@ import ma.dentalTech.service.modules.auth.api.AuthService;
 import ma.dentalTech.service.modules.auth.api.CredentialsValidator;
 import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
 
+import ma.dentalTech.service.modules.dossierMedicale.api.DossierMedicalService;
 import ma.dentalTech.service.modules.dossierMedicale.api.OrdonnanceService;
 import ma.dentalTech.service.modules.dossierMedicale.api.PrescriptionService;
+import ma.dentalTech.service.modules.dossierMedicale.impl.DossierMedicalServiceImpl;
 import ma.dentalTech.service.modules.notifications.api.NotificationService;
 import ma.dentalTech.service.modules.dossierMedicale.api.SituationFinanciereService;
 
@@ -444,6 +444,41 @@ public final class ApplicationContext {
 
                 putBean(ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaMensuelController.class, "agendaMensuelController", ctrl);
             }
+            // =====================
+// DOSSIER MEDICAL (repo/service/controller) - SessionFactory style
+// =====================
+            String dossierMedicalRepoClass = props.getProperty("dossierMedicalRepo");
+            if (!isBlank(dossierMedicalRepoClass)) {
+                var dmRepo = newNoArg(dossierMedicalRepoClass, ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepo.class);
+                putBean(ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepo.class, "dossierMedicalRepo", dmRepo);
+            }
+
+            String dossierMedicalServiceClass = props.getProperty("dossierMedicalService");
+            if (!isBlank(dossierMedicalServiceClass)) {
+                var dmRepo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepo.class);
+                if (dmRepo == null) throw new IllegalStateException("dossierMedicalRepo missing for dossierMedicalService");
+
+                var dmService = (ma.dentalTech.service.modules.dossierMedicale.api.DossierMedicalService)
+                        Class.forName(dossierMedicalServiceClass)
+                                .getDeclaredConstructor(ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepo.class)
+                                .newInstance(dmRepo);
+
+                putBean(ma.dentalTech.service.modules.dossierMedicale.api.DossierMedicalService.class, "dossierMedicalService", dmService);
+            }
+
+            String dossierMedicalControllerClass = props.getProperty("dossierMedicalController");
+            if (!isBlank(dossierMedicalControllerClass)) {
+                var dmService = getBean(ma.dentalTech.service.modules.dossierMedicale.api.DossierMedicalService.class);
+                if (dmService == null) throw new IllegalStateException("dossierMedicalService missing for dossierMedicalController");
+
+                var dmController = (ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController)
+                        Class.forName(dossierMedicalControllerClass)
+                                .getDeclaredConstructor(ma.dentalTech.service.modules.dossierMedicale.api.DossierMedicalService.class)
+                                .newInstance(dmService);
+
+                putBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class, "dossierMedicalController", dmController);
+            }
+
 
             // ============================================================
             // dashboard
@@ -458,43 +493,53 @@ public final class ApplicationContext {
                 var agendaController = getBean(ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaMensuelController.class);
                 var agendaService = getBean(ma.dentalTech.service.modules.agendas.api.AgendaMensuelService.class);
                 var rdvRepo = getBean(ma.dentalTech.repository.modules.agenda.api.RDVRepository.class);
+                var dossierMedicalController = getBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class);
 
-                if (authorizationService == null) throw new IllegalStateException("authorizationService missing for dashboardController");
-                if (authController == null) throw new IllegalStateException("authController missing for dashboardController");
-                if (patientController == null) throw new IllegalStateException("patientController missing for dashboardController");
-                if (rdvController == null) throw new IllegalStateException("rdvController missing for dashboardController");
-                if (medecinRepo == null) throw new IllegalStateException("medecinRepo missing for dashboardController");
-                if (agendaController == null) throw new IllegalStateException("agendaMensuelController missing for dashboardController");
-                if (agendaService == null) throw new IllegalStateException("agendaMensuelService missing for dashboardController");
+                if (dossierMedicalController == null)
+                    throw new IllegalStateException("dossierMedicalController missing for dashboardController");
+                if (authorizationService == null)
+                    throw new IllegalStateException("authorizationService missing for dashboardController");
+                if (authController == null)
+                    throw new IllegalStateException("authController missing for dashboardController");
+                if (patientController == null)
+                    throw new IllegalStateException("patientController missing for dashboardController");
+                if (rdvController == null)
+                    throw new IllegalStateException("rdvController missing for dashboardController");
+                if (medecinRepo == null)
+                    throw new IllegalStateException("medecinRepo missing for dashboardController");
+                if (agendaController == null)
+                    throw new IllegalStateException("agendaMensuelController missing for dashboardController");
+                if (agendaService == null)
+                    throw new IllegalStateException("agendaMensuelService missing for dashboardController");
 
                 DashboardController dashboardController = (DashboardController) Class.forName(dashboardControllerClass)
                         .getDeclaredConstructor(
                                 AuthorizationService.class,
                                 AuthController.class,
                                 PatientController.class,
-                                ma.dentalTech.repository.modules.agenda.api.RDVRepository.class,          // ✅ ajouté
+                                ma.dentalTech.repository.modules.agenda.api.RDVRepository.class,
                                 ma.dentalTech.mvc.controllers.modules.agenda.api.RDVController.class,
                                 ma.dentalTech.repository.modules.users.api.MedecinRepository.class,
                                 ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaMensuelController.class,
-                                ma.dentalTech.service.modules.agendas.api.AgendaMensuelService.class
+                                ma.dentalTech.service.modules.agendas.api.AgendaMensuelService.class,
+                                ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class   // ✅ ajouté
                         )
                         .newInstance(
                                 authorizationService,
                                 authController,
                                 patientController,
-                                rdvRepo,            // ✅ ajouté (le bean RDVRepository)
+                                rdvRepo,
                                 rdvController,
                                 medecinRepo,
                                 agendaController,
-                                agendaService
+                                agendaService,
+                                dossierMedicalController   // ✅ ajouté
                         );
 
                 putBean(DashboardController.class, "dashboardController", dashboardController);
 
 
             }
-
-
 // ----------------------------------------------------------------------------------------------------------------------------------------
             // ============================================================
             // 7) DATASOURCE + repos/services that require DataSource (optional)

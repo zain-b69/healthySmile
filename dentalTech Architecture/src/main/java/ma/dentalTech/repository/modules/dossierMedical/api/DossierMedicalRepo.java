@@ -17,4 +17,6 @@ public interface DossierMedicalRepo {
 
     Optional<DossierMedical> findByIdPatient(Long idPatient); // souvent unique (1 dossier / patient)
     List<DossierMedical> findByDateCreationBetween(LocalDate start, LocalDate end);
+
+    void updateDateCreation(Long idDm, LocalDate dateDeCreation);
 }

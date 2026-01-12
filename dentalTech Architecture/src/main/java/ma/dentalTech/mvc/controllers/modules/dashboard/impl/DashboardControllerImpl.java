@@ -9,6 +9,8 @@ import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.ui.modules.agenda.AgendaPagePanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.*;
+import ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController;
+import ma.dentalTech.mvc.ui.modules.dossierMedical.DossierMedicalPanel; // adapte le package de ton panel
 
 import ma.dentalTech.mvc.ui.modules.rdv.RendezVousPanel;
 import ma.dentalTech.repository.modules.agenda.api.RDVRepository;
@@ -30,16 +32,20 @@ public class DashboardControllerImpl implements DashboardController {
     private final RDVController rdvController;
     private final AgendaMensuelService agendaMensuelService;
     private final AgendaMensuelController agendaMensuelController;
+    private final DossierMedicalController dossierMedicalController;
 
     private DashboardFrame view;
     private UserPrincipal principal;
 
     public DashboardControllerImpl(AuthorizationService authorizationService,
                                    AuthController authController,
-                                   PatientController patientController, RDVRepository rdvRepository,
+                                   PatientController patientController,
+                                   RDVRepository rdvRepository,
                                    RDVController rdvController,
                                    MedecinRepository medecinRepository,
-                                   AgendaMensuelController agendaMensuelController, AgendaMensuelService agendaMensuelService) {
+                                   AgendaMensuelController agendaMensuelController,
+                                   AgendaMensuelService agendaMensuelService,
+                                   DossierMedicalController dossierMedicalController) {
         this.authorizationService = authorizationService;
         this.authController = authController;
         this.patientController = patientController;
@@ -48,8 +54,8 @@ public class DashboardControllerImpl implements DashboardController {
         this.medecinRepository = medecinRepository;
         this.agendaMensuelService = agendaMensuelService;
         this.agendaMensuelController = agendaMensuelController;
+        this.dossierMedicalController = dossierMedicalController;
     }
-
 
     @Override
     public void showDashboard(UserPrincipal principal) {
@@ -82,7 +88,7 @@ public class DashboardControllerImpl implements DashboardController {
             // placeholders (tu implémenteras après)
             case RENDEZ_VOUS -> new RendezVousPanel(principal, rdvController, patientController, medecinRepository);
             case AGENDA -> new AgendaPagePanel(medecinRepository, agendaMensuelService, rdvRepository);
-            case DOSSIERS_MEDICAUX -> placeholder("Dossiers médicaux");
+            case DOSSIERS_MEDICAUX -> new DossierMedicalPanel(dossierMedicalController);
             case ORDONNANCES -> placeholder("Ordonnances");
             case CERTIFICATIONS -> placeholder("Certifications");
             case CATALOGUE_ACTES -> placeholder("Catalogue des actes");

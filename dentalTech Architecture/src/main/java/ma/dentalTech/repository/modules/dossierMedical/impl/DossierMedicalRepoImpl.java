@@ -1,9 +1,9 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.dossierMedical.DossierMedical;
 import ma.dentalTech.repository.modules.dossierMedical.api.DossierMedicalRepo;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -12,19 +12,22 @@ import java.util.Optional;
 
 public class DossierMedicalRepoImpl implements DossierMedicalRepo {
 
-    private final DataSource dataSource;
-
-    public DossierMedicalRepoImpl(DataSource dataSource) {
-        this.dataSource = dataSource;
+    // ✅ comme RDVRepositoryImpl
+    private final SessionFactory sessionFactory = SessionFactory.getInstance();
+    private Connection cn() throws SQLException {
+        Connection c = sessionFactory.getConnection();
+        if (c == null) throw new SQLException("Connexion DB null");
+        return c;
     }
+    // ✅ constructeur vide demandé
+    public DossierMedicalRepoImpl() {}
 
     @Override
     public DossierMedical save(DossierMedical dm) {
         final String sql =
                 "INSERT INTO dossier_medicale (id_patient, date_de_creation) VALUES (?, ?)";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             setLongOrNull(ps, 1, dm.getIdPatient());
             setDateOrNull(ps, 2, dm.getDateDeCreation());
@@ -43,15 +46,12 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
 
     @Override
     public DossierMedical update(DossierMedical dm) {
-        if (dm.getIdDm() == null) {
-            throw new IllegalArgumentException("idDm est requis pour update");
-        }
+        if (dm.getIdDm() == null) throw new IllegalArgumentException("idDm est requis pour update");
 
         final String sql =
                 "UPDATE dossier_medicale SET id_patient=?, date_de_creation=? WHERE id_dm=?";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
 
             setLongOrNull(ps, 1, dm.getIdPatient());
             setDateOrNull(ps, 2, dm.getDateDeCreation());
@@ -71,7 +71,6 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
     public Optional<DossierMedical> findById(Long idDm) {
         final String sql =
                 "SELECT id_dm, id_patient, date_de_creation FROM dossier_medicale WHERE id_dm=?";
-
         return queryOne(sql, ps -> ps.setLong(1, idDm));
     }
 
@@ -79,7 +78,6 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
     public List<DossierMedical> findAll() {
         final String sql =
                 "SELECT id_dm, id_patient, date_de_creation FROM dossier_medicale";
-
         return queryList(sql, ps -> {});
     }
 
@@ -87,12 +85,9 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
     public boolean deleteById(Long idDm) {
         final String sql = "DELETE FROM dossier_medicale WHERE id_dm=?";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             ps.setLong(1, idDm);
             return ps.executeUpdate() > 0;
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur deleteById DossierMedical", e);
         }
@@ -102,7 +97,6 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
     public Optional<DossierMedical> findByIdPatient(Long idPatient) {
         final String sql =
                 "SELECT id_dm, id_patient, date_de_creation FROM dossier_medicale WHERE id_patient=?";
-
         return queryOne(sql, ps -> ps.setLong(1, idPatient));
     }
 
@@ -118,6 +112,19 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
         });
     }
 
+    @Override
+    public void updateDateCreation(Long idDm, LocalDate dateDeCreation) {
+        final String sql = "UPDATE dossier_medicale SET date_de_creation=? WHERE id_dm=?";
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+            setDateOrNull(ps, 1, dateDeCreation);
+            ps.setLong(2, idDm);
+            int updated = ps.executeUpdate();
+            if (updated == 0) throw new RuntimeException("DossierMedical introuvable: " + idDm);
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur updateDateCreation DossierMedical", e);
+        }
+    }
+
     // ---------------- Helpers ----------------
 
     private interface StatementBinder {
@@ -125,33 +132,25 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
     }
 
     private Optional<DossierMedical> queryOne(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             binder.bind(ps);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return Optional.of(mapRow(rs));
                 return Optional.empty();
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur queryOne DossierMedical", e);
         }
     }
 
     private List<DossierMedical> queryList(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
             binder.bind(ps);
-
             try (ResultSet rs = ps.executeQuery()) {
                 List<DossierMedical> list = new ArrayList<>();
                 while (rs.next()) list.add(mapRow(rs));
                 return list;
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur queryList DossierMedical", e);
         }
@@ -168,7 +167,6 @@ public class DossierMedicalRepoImpl implements DossierMedicalRepo {
         Date dc = rs.getDate("date_de_creation");
         dm.setDateDeCreation(dc == null ? null : dc.toLocalDate());
 
-        // objets & listes non chargés ici
         dm.setPatient(null);
         dm.setSituationFinanciere(null);
         dm.setConsultations(new ArrayList<>());

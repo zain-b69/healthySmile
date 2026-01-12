@@ -33,7 +33,7 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
         dm.setIdDm(null);
         dm.setIdPatient(idPatient);
 
-        // règle métier: date de création automatique si absente
+        // règle métier : date de création automatique si absente
         dm.setDateDeCreation(LocalDate.now());
 
         return dossierMedicalRepo.save(dm);
@@ -115,7 +115,12 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
             throw new IllegalArgumentException("dateDeCreation invalide (future)");
         }
 
-        dm.setDateDeCreation(nouvelleDate);
-        return dossierMedicalRepo.update(dm);
+        dossierMedicalRepo.updateDateCreation(idDm, nouvelleDate);
+        return getById(idDm);
+    }
+
+    @Override
+    public List<DossierMedical> listAll() {
+        return dossierMedicalRepo.findAll();
     }
 }
