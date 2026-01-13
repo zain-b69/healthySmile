@@ -69,10 +69,14 @@ public class ActeServiceImpl implements ActeService {
     public Acte changerPrixDeBase(Long idActe, Double nouveauPrixDeBase) {
         if (idActe == null) throw new IllegalArgumentException("idActe requis");
 
-        Acte current = getById(idActe);
-        current.setPrixDeBase(validatePrix(nouveauPrixDeBase));
+        Double prix = validatePrix(nouveauPrixDeBase);
 
-        return acteRepository.update(current);
+        boolean ok = acteRepository.updatePrixDeBase(idActe, prix);
+        if (!ok) throw new RuntimeException("Acte introuvable: " + idActe);
+
+        Acte current = getById(idActe); // ou éviter requête: construire mini objet
+        current.setPrixDeBase(prix);
+        return current;
     }
 
     // -------------------------

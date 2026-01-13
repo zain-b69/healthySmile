@@ -22,4 +22,8 @@ public interface FactureRepo {
     List<Facture> findByStatut(StatutFacture statut);
 
     List<Facture> findByDateFactureBetween(LocalDateTime start, LocalDateTime end);
+    boolean updateReste(Long idFacture, Double reste);
+    boolean updateStatut(Long idFacture, StatutFacture statut);
+    boolean updateResteAndStatut(Long idFacture, Double reste, StatutFacture statut);
+
 }

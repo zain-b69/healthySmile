@@ -1,16 +1,20 @@
 package ma.dentalTech.mvc.controllers.modules.dashboard.impl;
 
 import ma.dentalTech.entities.enums.RoleType;
+import ma.dentalTech.mvc.controllers.modules.acte.api.ActeController;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaMensuelController;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.RDVController;
 import ma.dentalTech.mvc.controllers.modules.auth.api.AuthController;
 import ma.dentalTech.mvc.controllers.modules.auth.impl.AuthSession;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
+import ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController;
+import ma.dentalTech.mvc.ui.modules.acte.ActeCataloguePanel;
 import ma.dentalTech.mvc.ui.modules.agenda.AgendaPagePanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.*;
 import ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController;
-import ma.dentalTech.mvc.ui.modules.dossierMedical.DossierMedicalPanel; // adapte le package de ton panel
+import ma.dentalTech.mvc.ui.modules.dossierMedical.DossierMedicalPanel;
+import ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController;// adapte le package de ton panel
 
 import ma.dentalTech.mvc.ui.modules.rdv.RendezVousPanel;
 import ma.dentalTech.repository.modules.agenda.api.RDVRepository;
@@ -33,6 +37,9 @@ public class DashboardControllerImpl implements DashboardController {
     private final AgendaMensuelService agendaMensuelService;
     private final AgendaMensuelController agendaMensuelController;
     private final DossierMedicalController dossierMedicalController;
+    private final ActeController acteController;
+    private final CaisseController caisseController;
+    private final StatistiquesController statistiquesController;
 
     private DashboardFrame view;
     private UserPrincipal principal;
@@ -45,7 +52,10 @@ public class DashboardControllerImpl implements DashboardController {
                                    MedecinRepository medecinRepository,
                                    AgendaMensuelController agendaMensuelController,
                                    AgendaMensuelService agendaMensuelService,
-                                   DossierMedicalController dossierMedicalController) {
+                                   DossierMedicalController dossierMedicalController,
+                                   ActeController acteController,
+                                   CaisseController caisseController,
+                                   StatistiquesController statistiquesController) {
         this.authorizationService = authorizationService;
         this.authController = authController;
         this.patientController = patientController;
@@ -55,6 +65,9 @@ public class DashboardControllerImpl implements DashboardController {
         this.agendaMensuelService = agendaMensuelService;
         this.agendaMensuelController = agendaMensuelController;
         this.dossierMedicalController = dossierMedicalController;
+        this.acteController = acteController;
+        this.caisseController = caisseController;
+        this.statistiquesController = statistiquesController;
     }
 
     @Override
@@ -91,9 +104,9 @@ public class DashboardControllerImpl implements DashboardController {
             case DOSSIERS_MEDICAUX -> new DossierMedicalPanel(dossierMedicalController);
             case ORDONNANCES -> placeholder("Ordonnances");
             case CERTIFICATIONS -> placeholder("Certifications");
-            case CATALOGUE_ACTES -> placeholder("Catalogue des actes");
-            case CAISSE -> placeholder("Caisse");
-            case STATISTIQUES -> placeholder("Statistiques");
+            case CATALOGUE_ACTES -> new ActeCataloguePanel(acteController);
+            case CAISSE -> new ma.dentalTech.mvc.ui.modules.caisse.CaissePanel(caisseController);
+            case STATISTIQUES -> new ma.dentalTech.mvc.ui.modules.statistiques.StatistiquesPanel(statistiquesController);
             case USERS -> placeholder("Gestion des utilisateurs");
         };
     }

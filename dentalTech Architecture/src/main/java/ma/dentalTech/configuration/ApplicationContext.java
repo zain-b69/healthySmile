@@ -479,6 +479,112 @@ public final class ApplicationContext {
                 putBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class, "dossierMedicalController", dmController);
             }
 
+// ============ ACTE (Catalogue) ============
+            String acteRepoClass = props.getProperty("acteRepo");
+            if (!isBlank(acteRepoClass)) {
+                var repo = newNoArg(acteRepoClass, ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class);
+                putBean(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class, "acteRepo", repo);
+            }
+
+            String acteServiceClass = props.getProperty("acteService");
+            if (!isBlank(acteServiceClass)) {
+                var repo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class);
+                if (repo == null) throw new IllegalStateException("acteRepo missing for acteService");
+
+                var svc = (ma.dentalTech.service.modules.dossierMedicale.api.ActeService) Class.forName(acteServiceClass)
+                        .getDeclaredConstructor(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class)
+                        .newInstance(repo);
+
+                putBean(ma.dentalTech.service.modules.dossierMedicale.api.ActeService.class, "acteService", svc);
+            }
+
+            String acteControllerClass = props.getProperty("acteController");
+            if (!isBlank(acteControllerClass)) {
+                var svc = getBean(ma.dentalTech.service.modules.dossierMedicale.api.ActeService.class);
+                if (svc == null) throw new IllegalStateException("acteService missing for acteController");
+
+                Object ctrl = Class.forName(acteControllerClass)
+                        .getDeclaredConstructor(ma.dentalTech.service.modules.dossierMedicale.api.ActeService.class)
+                        .newInstance(svc);
+
+                contextByName.put("acteController", ctrl);
+                context.put(ma.dentalTech.mvc.controllers.modules.acte.api.ActeController.class, ctrl);
+            }
+            String factureRepoClass = props.getProperty("factureRepo");
+            if (!isBlank(factureRepoClass)) {
+                var factureRepo = newNoArg(factureRepoClass, ma.dentalTech.repository.modules.facturation.api.FactureRepo.class);
+                putBean(ma.dentalTech.repository.modules.facturation.api.FactureRepo.class, "factureRepo", factureRepo);
+            }
+            instantiateService1Dep(props, "caisseService",
+                    ma.dentalTech.service.modules.caisse.api.CaisseService.class,
+                    ma.dentalTech.repository.modules.facturation.api.FactureRepo.class);
+            String caisseControllerClass = props.getProperty("caisseController");
+            if (!isBlank(caisseControllerClass)) {
+                var caisseService = getBean(ma.dentalTech.service.modules.caisse.api.CaisseService.class);
+                if (caisseService == null) throw new IllegalStateException("caisseService missing for caisseController");
+
+                Object ctrl = Class.forName(caisseControllerClass)
+                        .getDeclaredConstructor(ma.dentalTech.service.modules.caisse.api.CaisseService.class)
+                        .newInstance(caisseService);
+
+                contextByName.put("caisseController", ctrl);
+                context.put(ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController.class, ctrl);
+            }
+
+            String cabinetRepoClass = props.getProperty("cabinetRepo");
+            if (!isBlank(cabinetRepoClass)) {
+                Object repo = Class.forName(cabinetRepoClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                contextByName.put("cabinetRepo", repo);
+                context.put(ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository.class, repo);
+            }
+
+            // =====================
+// STATISTIQUES (Repo → Service → Controller)
+// =====================
+            String statistiquesRepoClass = props.getProperty("statistiquesRepo");
+            if (!isBlank(statistiquesRepoClass)) {
+                Object repo = Class.forName(statistiquesRepoClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                contextByName.put("statistiquesRepo", repo);
+                context.put(ma.dentalTech.repository.modules.cabinet.api.StatistiquesRepository.class, repo);
+            }
+
+            String statistiquesServiceClass = props.getProperty("statistiquesService");
+            if (!isBlank(statistiquesServiceClass)) {
+                var statsRepo = getBean(ma.dentalTech.repository.modules.cabinet.api.StatistiquesRepository.class);
+                var cabinetRepo = getBean(ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository.class);
+
+                if (statsRepo == null) throw new IllegalStateException("statistiquesRepo missing for statistiquesService");
+                if (cabinetRepo == null) throw new IllegalStateException("cabinetMedicalRepository missing for statistiquesService");
+
+                Object svc = Class.forName(statistiquesServiceClass)
+                        .getDeclaredConstructor(
+                                ma.dentalTech.repository.modules.cabinet.api.StatistiquesRepository.class,
+                                ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository.class
+                        )
+                        .newInstance(statsRepo, cabinetRepo);
+
+                contextByName.put("statistiquesService", svc);
+                context.put(ma.dentalTech.service.modules.cabinet.api.StatistiquesService.class, svc);
+            }
+
+            String statistiquesControllerClass = props.getProperty("statistiquesController");
+            if (!isBlank(statistiquesControllerClass)) {
+                var svc = getBean(ma.dentalTech.service.modules.cabinet.api.StatistiquesService.class);
+                if (svc == null) throw new IllegalStateException("statistiquesService missing for statistiquesController");
+
+                Object ctrl = Class.forName(statistiquesControllerClass)
+                        .getDeclaredConstructor(ma.dentalTech.service.modules.cabinet.api.StatistiquesService.class)
+                        .newInstance(svc);
+
+                contextByName.put("statistiquesController", ctrl);
+                context.put(ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController.class, ctrl);
+            }
 
             // ============================================================
             // dashboard
@@ -494,6 +600,9 @@ public final class ApplicationContext {
                 var agendaService = getBean(ma.dentalTech.service.modules.agendas.api.AgendaMensuelService.class);
                 var rdvRepo = getBean(ma.dentalTech.repository.modules.agenda.api.RDVRepository.class);
                 var dossierMedicalController = getBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class);
+                var acteController = getBean(ma.dentalTech.mvc.controllers.modules.acte.api.ActeController.class);
+                var caisseController = getBean(ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController.class);
+                var statistiquesController = getBean(ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController.class);
 
                 if (dossierMedicalController == null)
                     throw new IllegalStateException("dossierMedicalController missing for dashboardController");
@@ -511,6 +620,12 @@ public final class ApplicationContext {
                     throw new IllegalStateException("agendaMensuelController missing for dashboardController");
                 if (agendaService == null)
                     throw new IllegalStateException("agendaMensuelService missing for dashboardController");
+                if (acteController == null)
+                    throw new IllegalStateException("acteController missing for dashboardController");
+                if (caisseController == null)
+                    throw new IllegalStateException("caisseController missing for dashboardController");
+                if (statistiquesController == null)
+                    throw new IllegalStateException("statistiquesController missing for dashboardController");
 
                 DashboardController dashboardController = (DashboardController) Class.forName(dashboardControllerClass)
                         .getDeclaredConstructor(
@@ -522,7 +637,10 @@ public final class ApplicationContext {
                                 ma.dentalTech.repository.modules.users.api.MedecinRepository.class,
                                 ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaMensuelController.class,
                                 ma.dentalTech.service.modules.agendas.api.AgendaMensuelService.class,
-                                ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class   // ✅ ajouté
+                                ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class,
+                                ma.dentalTech.mvc.controllers.modules.acte.api.ActeController.class,
+                                ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController.class,
+                                ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController.class// ✅ ajouté
                         )
                         .newInstance(
                                 authorizationService,
@@ -533,7 +651,10 @@ public final class ApplicationContext {
                                 medecinRepo,
                                 agendaController,
                                 agendaService,
-                                dossierMedicalController   // ✅ ajouté
+                                dossierMedicalController,
+                                acteController,
+                                caisseController,
+                                statistiquesController// ✅ ajouté
                         );
 
                 putBean(DashboardController.class, "dashboardController", dashboardController);
