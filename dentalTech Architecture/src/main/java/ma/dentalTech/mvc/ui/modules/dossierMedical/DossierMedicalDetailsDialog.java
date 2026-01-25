@@ -2,6 +2,8 @@ package ma.dentalTech.mvc.ui.modules.dossierMedical;
 
 import ma.dentalTech.entities.dossierMedical.DossierMedical;
 import ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +18,7 @@ public class DossierMedicalDetailsDialog extends JDialog {
     private final JLabel idDmLabel = new JLabel();
     private final JLabel idPatientLabel = new JLabel();
     private final JTextField dateCreationField = new JTextField(10);
-    private final JButton saveDateBtn = new JButton("Corriger date");
+    private final RoundedButton saveDateBtn = new RoundedButton("Corriger date");
 
     public DossierMedicalDetailsDialog(Window owner, DossierMedicalController controller, long idDm, Runnable onCloseRefresh) {
         super(owner, "Dossier Médical #" + idDm, ModalityType.APPLICATION_MODAL);
@@ -40,6 +42,7 @@ public class DossierMedicalDetailsDialog extends JDialog {
         p.add(dateCreationField);
 
         p.add(new JLabel(""));
+        ButtonStyles.primary(saveDateBtn);
         p.add(saveDateBtn);
 
         add(p);

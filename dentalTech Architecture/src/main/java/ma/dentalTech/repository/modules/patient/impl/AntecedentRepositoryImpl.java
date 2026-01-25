@@ -161,18 +161,32 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
         if (id == null) return;
 
         Antecedent a = findById(id);
+        if (a == null) return;
 
-        String sql = "DELETE FROM antecedents WHERE id_antecedent = ?";
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
-            ps.setLong(1, id);
-            ps.executeUpdate();
+        try {
+            Connection c = cn();
+
+            // 1) supprimer les liaisons (FK)
+            try (PreparedStatement ps = c.prepareStatement(
+                    "DELETE FROM patient_antecedent WHERE id_antecedent = ?")) {
+                ps.setLong(1, id);
+                ps.executeUpdate();
+            }
+
+            // 2) supprimer l'antécédent
+            try (PreparedStatement ps = c.prepareStatement(
+                    "DELETE FROM antecedents WHERE id_antecedent = ?")) {
+                ps.setLong(1, id);
+                ps.executeUpdate();
+            }
+
+            // 3) optionnel : supprimer entite (si aucune autre table ne la référence)
+            if (a.getId() != null) {
+                deleteEntite(a.getId());
+            }
+
         } catch (SQLException ex) {
             throw new RuntimeException("Antecedent.deleteById failed", ex);
-        }
-
-        // optionnel : supprimer entite si tu veux
-        if (a != null && a.getId() != null) {
-            deleteEntite(a.getId());
         }
     }
 

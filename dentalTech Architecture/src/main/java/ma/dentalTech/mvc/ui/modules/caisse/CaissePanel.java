@@ -3,6 +3,8 @@ package ma.dentalTech.mvc.ui.modules.caisse;
 import ma.dentalTech.entities.dossierMedical.Facture;
 import ma.dentalTech.entities.enums.StatutFacture;
 import ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,8 +28,6 @@ public class CaissePanel extends JPanel {
     private final JTextField tfStart = new JTextField(16); // yyyy-MM-dd HH:mm
     private final JTextField tfEnd   = new JTextField(16);
     private final JTextField tfIdSf  = new JTextField(10);
-
-    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public CaissePanel(CaisseController controller) {
         this.controller = controller;
@@ -79,19 +79,15 @@ public class CaissePanel extends JPanel {
         c.gridx=0; c.gridy=0; p.add(new JLabel("Statut:"), c);
         c.gridx=1; p.add(cbStatut, c);
 
-        c.gridx=2; p.add(new JLabel("Début (yyyy-MM-dd HH:mm):"), c);
-        c.gridx=3; p.add(tfStart, c);
-
-        c.gridx=0; c.gridy=1; p.add(new JLabel("Fin (yyyy-MM-dd HH:mm):"), c);
-        c.gridx=1; p.add(tfEnd, c);
-
         c.gridx=2; p.add(new JLabel("ID SF:"), c);
         c.gridx=3; p.add(tfIdSf, c);
 
-        JButton btnSearch = new JButton("Rechercher");
+        RoundedButton btnSearch = new RoundedButton("Rechercher");
+        ButtonStyles.primary(btnSearch);
         btnSearch.addActionListener(e -> onSearch());
 
-        JButton btnReset = new JButton("Reset");
+        RoundedButton btnReset = new RoundedButton("Reset");
+        ButtonStyles.primary(btnReset);
         btnReset.addActionListener(e -> {
             cbStatut.setSelectedItem(null);
             tfStart.setText("");
@@ -114,24 +110,28 @@ public class CaissePanel extends JPanel {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         p.setOpaque(false);
 
-        JButton btnAdd = new JButton("Ajouter facture");
+        RoundedButton btnAdd = new RoundedButton("Ajouter facture");
+        ButtonStyles.primary(btnAdd);
         btnAdd.addActionListener(e -> openCreate());
 
-        JButton btnPay = new JButton("Encaisser");
+        RoundedButton btnPay = new RoundedButton("Encaisser");
+        ButtonStyles.primary(btnPay);
         btnPay.addActionListener(e -> {
             Long id = selectedId();
             if (id == null) return;
             openEncaisser(id);
         });
 
-        JButton btnCancel = new JButton("Annuler");
+        RoundedButton btnCancel = new RoundedButton("Annuler");
+        ButtonStyles.primary(btnCancel);
         btnCancel.addActionListener(e -> {
             Long id = selectedId();
             if (id == null) return;
             onAnnuler(id);
         });
 
-        JButton btnDetails = new JButton("Détails");
+        RoundedButton btnDetails = new RoundedButton("Détails");
+        ButtonStyles.primary(btnDetails);
         btnDetails.addActionListener(e -> {
             Long id = selectedId();
             if (id == null) return;
@@ -166,19 +166,15 @@ public class CaissePanel extends JPanel {
     private void onSearch() {
         try {
             StatutFacture statut = (StatutFacture) cbStatut.getSelectedItem();
-            LocalDateTime start = parseDateOrNull(tfStart.getText());
-            LocalDateTime end   = parseDateOrNull(tfEnd.getText());
             Long idSf = parseLongOrNull(tfIdSf.getText());
 
             boolean hasSf = idSf != null;
             boolean hasStatut = statut != null;
-            boolean hasDates = (start != null && end != null);
 
             List<Facture> base;
 
             if (hasSf) base = controller.findBySf(idSf);
             else if (hasStatut) base = controller.findByStatut(statut);
-            else if (hasDates) base = controller.findByDateBetween(start, end);
             else base = controller.findAll();
 
             // filtres supplémentaires si plusieurs critères
@@ -186,11 +182,6 @@ public class CaissePanel extends JPanel {
             for (Facture f : base) {
                 if (hasSf && !idSf.equals(f.getIdSf())) continue;
                 if (hasStatut && f.getStatut() != statut) continue;
-
-                if (hasDates) {
-                    if (f.getDateFacture() == null) continue;
-                    if (f.getDateFacture().isBefore(start) || f.getDateFacture().isAfter(end)) continue;
-                }
 
                 filtered.add(f);
             }
@@ -268,8 +259,7 @@ public class CaissePanel extends JPanel {
                     f.getIdSf(),
                     f.getTotaleFacture(),
                     f.getReste(),
-                    f.getStatut(),
-                    f.getDateFacture() == null ? "" : f.getDateFacture().format(fmt)
+                    f.getStatut()
             });
         }
     }
@@ -285,11 +275,6 @@ public class CaissePanel extends JPanel {
     }
 
     // ---------------- Parsers + errors ----------------
-
-    private LocalDateTime parseDateOrNull(String s) {
-        if (s == null || s.isBlank()) return null;
-        return LocalDateTime.parse(s.trim(), fmt);
-    }
 
     private Long parseLongOrNull(String s) {
         if (s == null || s.isBlank()) return null;

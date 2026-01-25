@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public class FactureRepoImpl implements FactureRepo {
 
-    // ✅ no-arg constructor (comme RDVRepositoryImpl)
+    // ✅ no-arg constructor
     public FactureRepoImpl() {}
 
     // ------------------------------------------------------------
@@ -21,6 +21,31 @@ public class FactureRepoImpl implements FactureRepo {
     // ------------------------------------------------------------
     private Connection cn() throws SQLException {
         return SessionFactory.getInstance().getConnection();
+    }
+
+    @Override
+    public Long create(Long idConsultation, Long idSituationFinanciere, double total, double reste) {
+        String sql = """
+            INSERT INTO facture (id_entite, totale_facture, reste, statut, date_facture, id_consultation, id_sf)
+            VALUES (NULL, ?, ?, 'EN_ATTENTE', NOW(), ?, ?)
+            """;
+
+        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setDouble(1, total);
+            ps.setDouble(2, reste);
+            ps.setLong(3, idConsultation);
+            ps.setLong(4, idSituationFinanciere);
+
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getLong(1);
+            }
+            throw new IllegalStateException("INSERT facture OK mais id_facture non récupéré");
+        } catch (SQLException e) {
+            e.printStackTrace(); // TEMP: pour voir la cause dans console
+            throw new RuntimeException("Facture.create failed: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -141,6 +166,20 @@ public class FactureRepoImpl implements FactureRepo {
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur updateResteAndStatut Facture", e);
+        }
+    }
+
+    @Override
+    public void updateTotaux(Long idFacture, double total, double reste) {
+        String sql = "UPDATE facture SET totale_facture=?, reste=? WHERE id_facture=?";
+
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+            ps.setDouble(1, total);
+            ps.setDouble(2, reste);
+            ps.setLong(3, idFacture);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Facture.updateTotaux failed", e);
         }
     }
 

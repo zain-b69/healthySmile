@@ -108,6 +108,11 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
         }
     }
 
+    public Long createAndReturnId(SituationFinanciere sf) {
+        create(sf);
+        return sf.getIdSf();
+    }
+
     @Override
     public void update(SituationFinanciere sf) {
         if (sf == null || sf.getIdSf() == null)

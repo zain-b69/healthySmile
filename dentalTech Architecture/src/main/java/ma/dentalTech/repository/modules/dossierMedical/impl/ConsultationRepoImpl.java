@@ -1,10 +1,10 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.dossierMedical.Consultation;
 import ma.dentalTech.entities.enums.StatutConsultation;
 import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -13,10 +13,14 @@ import java.util.Optional;
 
 public class ConsultationRepoImpl implements ConsultationRepo {
 
-    private final DataSource dataSource;
+    private final SessionFactory sessionFactory = SessionFactory.getInstance();
 
-    public ConsultationRepoImpl(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public ConsultationRepoImpl() {
+        // no-arg pour ApplicationContext.newNoArg()
+    }
+
+    private Connection cn() throws SQLException {
+        return sessionFactory.getConnection(); // ⚠️ ne pas fermer si ton SessionFactory gère un singleton
     }
 
     @Override
@@ -25,22 +29,24 @@ public class ConsultationRepoImpl implements ConsultationRepo {
                 "INSERT INTO consultation (id_medecin, date, statut, observation_medecin, id_dm, id_rdv) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try {
+            Connection cn = cn(); // ⚠️ comme PatientRepositoryImpl : ne pas fermer ici
 
-            setLongOrNull(ps, 1, c.getIdMedecin());
-            setDateOrNull(ps, 2, c.getDate());
-            setStringOrNull(ps, 3, c.getStatut() == null ? null : c.getStatut().name());
-            ps.setString(4, c.getObservationMedecin());
-            setLongOrNull(ps, 5, c.getIdDm());
-            setLongOrNull(ps, 6, c.getIdRdv());
+            try (PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                setLongOrNull(ps, 1, c.getIdMedecin());
+                setDateOrNull(ps, 2, c.getDate());
+                setStringOrNull(ps, 3, c.getStatut() == null ? null : c.getStatut().name());
+                ps.setString(4, c.getObservationMedecin());
+                setLongOrNull(ps, 5, c.getIdDm());
+                setLongOrNull(ps, 6, c.getIdRdv());
 
-            ps.executeUpdate();
+                ps.executeUpdate();
 
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) c.setIdConsultation(rs.getLong(1));
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) c.setIdConsultation(rs.getLong(1));
+                }
+                return c;
             }
-            return c;
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur save Consultation", e);
@@ -57,21 +63,23 @@ public class ConsultationRepoImpl implements ConsultationRepo {
                 "UPDATE consultation SET id_medecin=?, date=?, statut=?, observation_medecin=?, id_dm=?, id_rdv=? " +
                         "WHERE id_consultation=?";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try {
+            Connection cn = cn();
 
-            setLongOrNull(ps, 1, c.getIdMedecin());
-            setDateOrNull(ps, 2, c.getDate());
-            setStringOrNull(ps, 3, c.getStatut() == null ? null : c.getStatut().name());
-            ps.setString(4, c.getObservationMedecin());
-            setLongOrNull(ps, 5, c.getIdDm());
-            setLongOrNull(ps, 6, c.getIdRdv());
-            ps.setLong(7, c.getIdConsultation());
+            try (PreparedStatement ps = cn.prepareStatement(sql)) {
+                setLongOrNull(ps, 1, c.getIdMedecin());
+                setDateOrNull(ps, 2, c.getDate());
+                setStringOrNull(ps, 3, c.getStatut() == null ? null : c.getStatut().name());
+                ps.setString(4, c.getObservationMedecin());
+                setLongOrNull(ps, 5, c.getIdDm());
+                setLongOrNull(ps, 6, c.getIdRdv());
+                ps.setLong(7, c.getIdConsultation());
 
-            int updated = ps.executeUpdate();
-            if (updated == 0) throw new RuntimeException("Consultation introuvable: " + c.getIdConsultation());
+                int updated = ps.executeUpdate();
+                if (updated == 0) throw new RuntimeException("Consultation introuvable: " + c.getIdConsultation());
 
-            return c;
+                return c;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur update Consultation", e);
@@ -100,11 +108,13 @@ public class ConsultationRepoImpl implements ConsultationRepo {
     public boolean deleteById(Long idConsultation) {
         final String sql = "DELETE FROM consultation WHERE id_consultation=?";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try {
+            Connection cn = cn();
 
-            ps.setLong(1, idConsultation);
-            return ps.executeUpdate() > 0;
+            try (PreparedStatement ps = cn.prepareStatement(sql)) {
+                ps.setLong(1, idConsultation);
+                return ps.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur deleteById Consultation", e);
@@ -166,14 +176,16 @@ public class ConsultationRepoImpl implements ConsultationRepo {
     }
 
     private Optional<Consultation> queryOne(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try {
+            Connection cn = cn();
 
-            binder.bind(ps);
+            try (PreparedStatement ps = cn.prepareStatement(sql)) {
+                binder.bind(ps);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
-                return Optional.empty();
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return Optional.of(mapRow(rs));
+                    return Optional.empty();
+                }
             }
 
         } catch (SQLException e) {
@@ -182,15 +194,17 @@ public class ConsultationRepoImpl implements ConsultationRepo {
     }
 
     private List<Consultation> queryList(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try {
+            Connection cn = cn();
 
-            binder.bind(ps);
+            try (PreparedStatement ps = cn.prepareStatement(sql)) {
+                binder.bind(ps);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                List<Consultation> list = new ArrayList<>();
-                while (rs.next()) list.add(mapRow(rs));
-                return list;
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<Consultation> list = new ArrayList<>();
+                    while (rs.next()) list.add(mapRow(rs));
+                    return list;
+                }
             }
 
         } catch (SQLException e) {

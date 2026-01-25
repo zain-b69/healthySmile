@@ -2,8 +2,8 @@ package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.entities.dossierMedical.InterventionMedecin;
 import ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepo;
+import ma.dentalTech.configuration.SessionFactory;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +11,10 @@ import java.util.Optional;
 
 public class InterventionMedecinRepoImpl implements InterventionMedecinRepo {
 
-    private final DataSource dataSource;
+    private final SessionFactory sessionFactory;
 
-    public InterventionMedecinRepoImpl(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public InterventionMedecinRepoImpl() {
+        this.sessionFactory = SessionFactory.getInstance();
     }
 
     @Override
@@ -23,8 +23,7 @@ public class InterventionMedecinRepoImpl implements InterventionMedecinRepo {
                 "INSERT INTO intervention_medecin (id_consultation, id_acte, prix_de_patient, num_dent) " +
                         "VALUES (?, ?, ?, ?)";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = sessionFactory.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             setLongOrNull(ps, 1, im.getIdConsultation());
             setLongOrNull(ps, 2, im.getIdActe());
@@ -54,8 +53,7 @@ public class InterventionMedecinRepoImpl implements InterventionMedecinRepo {
                         "SET id_consultation=?, id_acte=?, prix_de_patient=?, num_dent=? " +
                         "WHERE id_im=?";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try (PreparedStatement ps = sessionFactory.getConnection().prepareStatement(sql)) {
 
             setLongOrNull(ps, 1, im.getIdConsultation());
             setLongOrNull(ps, 2, im.getIdActe());
@@ -95,12 +93,9 @@ public class InterventionMedecinRepoImpl implements InterventionMedecinRepo {
     public boolean deleteById(Long idIm) {
         final String sql = "DELETE FROM intervention_medecin WHERE id_im=?";
 
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = sessionFactory.getConnection().prepareStatement(sql)) {
             ps.setLong(1, idIm);
             return ps.executeUpdate() > 0;
-
         } catch (SQLException e) {
             throw new RuntimeException("Erreur deleteById InterventionMedecin", e);
         }
@@ -144,8 +139,7 @@ public class InterventionMedecinRepoImpl implements InterventionMedecinRepo {
     }
 
     private Optional<InterventionMedecin> queryOne(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try (PreparedStatement ps = sessionFactory.getConnection().prepareStatement(sql)) {
 
             binder.bind(ps);
 
@@ -160,8 +154,7 @@ public class InterventionMedecinRepoImpl implements InterventionMedecinRepo {
     }
 
     private List<InterventionMedecin> queryList(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+        try (PreparedStatement ps = sessionFactory.getConnection().prepareStatement(sql)) {
 
             binder.bind(ps);
 

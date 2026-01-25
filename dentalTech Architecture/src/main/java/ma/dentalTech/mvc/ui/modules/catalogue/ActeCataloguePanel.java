@@ -1,7 +1,9 @@
-package ma.dentalTech.mvc.ui.modules.acte;
+package ma.dentalTech.mvc.ui.modules.catalogue;
 
 import ma.dentalTech.entities.dossierMedical.Acte;
 import ma.dentalTech.mvc.controllers.modules.acte.api.ActeController;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -14,8 +16,8 @@ public class ActeCataloguePanel extends JPanel {
 
     private final JTextField keywordField = new JTextField(14);
     private final JTextField categorieField = new JTextField(12);
-    private final JButton searchBtn = new JButton("Rechercher");
-    private final JButton resetBtn = new JButton("Reset");
+    private final RoundedButton searchBtn = new RoundedButton("Rechercher");
+    private final RoundedButton resetBtn = new RoundedButton("Reset");
 
     private final DefaultTableModel model = new DefaultTableModel(
             new Object[]{"ID", "Libellé", "Catégorie", "Prix"}, 0
@@ -23,11 +25,11 @@ public class ActeCataloguePanel extends JPanel {
 
     private final JTable table = new JTable(model);
 
-    private final JButton addBtn = new JButton("Ajouter");
-    private final JButton editBtn = new JButton("Modifier");
-    private final JButton priceBtn = new JButton("Changer prix");
-    private final JButton delBtn = new JButton("Supprimer");
-    private final JButton refreshBtn = new JButton("Rafraîchir");
+    private final RoundedButton addBtn = new RoundedButton("Ajouter");
+    private final RoundedButton editBtn = new RoundedButton("Modifier");
+    private final RoundedButton priceBtn = new RoundedButton("Changer prix");
+    private final RoundedButton delBtn = new RoundedButton("Supprimer");
+    private final RoundedButton refreshBtn = new RoundedButton("Rafraîchir");
 
     public ActeCataloguePanel(ActeController controller) {
         this.controller = controller;
@@ -47,17 +49,24 @@ public class ActeCataloguePanel extends JPanel {
         p.add(keywordField);
         p.add(new JLabel("Catégorie:"));
         p.add(categorieField);
+        ButtonStyles.primary(searchBtn);
         p.add(searchBtn);
+        ButtonStyles.primary(resetBtn);
         p.add(resetBtn);
         return p;
     }
 
     private JComponent buildBottom() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        ButtonStyles.primary(addBtn);
         p.add(addBtn);
+        ButtonStyles.primary(editBtn);
         p.add(editBtn);
+        ButtonStyles.primary(priceBtn);
         p.add(priceBtn);
+        ButtonStyles.primary(delBtn);
         p.add(delBtn);
+        ButtonStyles.primary(refreshBtn);
         p.add(refreshBtn);
         return p;
     }
@@ -176,7 +185,7 @@ public class ActeCataloguePanel extends JPanel {
             JTextField catField = new JTextField(acte != null ? acte.getCategorie() : "", 20);
             JTextField prixField = new JTextField(acte != null && acte.getPrixDeBase()!=null ? String.valueOf(acte.getPrixDeBase()) : "", 10);
 
-            JButton save = new JButton(acte == null ? "Créer" : "Enregistrer");
+            RoundedButton save = new RoundedButton(acte == null ? "Créer" : "Enregistrer");
 
             JPanel p = new JPanel(new GridBagLayout());
             p.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));

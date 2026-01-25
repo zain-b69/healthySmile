@@ -3,6 +3,8 @@ package ma.dentalTech.mvc.ui.modules.statistiques;
 import ma.dentalTech.entities.cabinet.Statistiques;
 import ma.dentalTech.entities.enums.CategorieStatistique;
 import ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -57,15 +59,18 @@ public class StatistiquesPanel extends JPanel {
         p.add(new JLabel("Catégorie:"));
         p.add(cbCat);
 
-        JButton btnLister = new JButton("Lister");
+        RoundedButton btnLister = new RoundedButton("Lister");
+        ButtonStyles.primary(btnLister);
         btnLister.addActionListener(e -> onLister());
         p.add(btnLister);
 
-        JButton btnGenerer = new JButton("Générer snapshot");
+        RoundedButton btnGenerer = new RoundedButton("Générer snapshot");
+        ButtonStyles.primary(btnGenerer);
         btnGenerer.addActionListener(e -> onGenerer());
         p.add(btnGenerer);
 
-        JButton btnRapport = new JButton("Rapport performance");
+        RoundedButton btnRapport = new RoundedButton("Rapport performance");
+        ButtonStyles.primary(btnRapport);
         btnRapport.addActionListener(e -> onRapport());
         p.add(btnRapport);
 
@@ -75,7 +80,8 @@ public class StatistiquesPanel extends JPanel {
     private JComponent buildBottom() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 
-        JButton btnDelete = new JButton("Supprimer");
+        RoundedButton btnDelete = new RoundedButton("Supprimer");
+        ButtonStyles.primary(btnDelete);
         btnDelete.addActionListener(e -> onDeleteSelected());
         p.add(btnDelete);
 
@@ -87,16 +93,22 @@ public class StatistiquesPanel extends JPanel {
             long idCab = parseCabinetId();
             CategorieStatistique cat = (CategorieStatistique) cbCat.getSelectedItem();
 
+            System.out.println("LISTER: idCab=" + idCab + ", cat=" + cat);
+
             List<Statistiques> list;
             if (cat != null) list = controller.findByCabinetAndCategorie(idCab, cat);
             else list = controller.findByCabinet(idCab);
 
+            System.out.println("RESULT SIZE = " + (list == null ? "null" : list.size()));
+
             refresh(list);
 
         } catch (Exception ex) {
+            ex.printStackTrace(); // IMPORTANT
             showErr(ex);
         }
     }
+
 
     private void onGenerer() {
         try {

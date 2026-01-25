@@ -1,9 +1,12 @@
 package ma.dentalTech.service.modules.caisse.impl;
 
+import ma.dentalTech.entities.dossierMedical.Consultation;
 import ma.dentalTech.entities.dossierMedical.Facture;
 import ma.dentalTech.entities.enums.StatutFacture;
+import ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo;
 import ma.dentalTech.repository.modules.facturation.api.FactureRepo;
 import ma.dentalTech.service.modules.caisse.api.CaisseService;
+import ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,12 +14,14 @@ import java.util.List;
 public class CaisseServiceImpl implements CaisseService {
 
     private final FactureRepo factureRepo;
+    private final ConsultationRepo consultationRepo;
+    private final InterventionMedecinService interventionMedecinService;
 
-    public CaisseServiceImpl(FactureRepo factureRepo) {
-        if (factureRepo == null) throw new IllegalArgumentException("FactureRepo requis");
+    public CaisseServiceImpl(FactureRepo factureRepo, ConsultationRepo consultationRepo, InterventionMedecinService interventionMedecinService /* + autres deps */) {
         this.factureRepo = factureRepo;
+        this.consultationRepo = consultationRepo;
+        this.interventionMedecinService = interventionMedecinService;
     }
-
     // -------------------------
     // Use-case 1 : créer facture
     // -------------------------
@@ -156,6 +161,31 @@ public class CaisseServiceImpl implements CaisseService {
         if (end.isBefore(start)) throw new IllegalArgumentException("Intervalle invalide (end < start)");
         return factureRepo.findByDateFactureBetween(start, end);
     }
+
+    @Override
+    public Facture creerFactureDepuisConsultation(Long idConsultation, Long idSituationFinanciere) {
+        if (idConsultation == null) throw new IllegalArgumentException("idConsultation obligatoire");
+        if (idSituationFinanciere == null) throw new IllegalArgumentException("idSituationFinanciere obligatoire");
+
+        Consultation c = consultationRepo.findById(idConsultation)
+                .orElseThrow(() -> new IllegalArgumentException("Consultation inexistante"));
+
+        double total = interventionMedecinService.calculerTotalConsultation(idConsultation);
+        double reste = total;
+
+        Long idFacture =factureRepo.create(idConsultation, idSituationFinanciere, total, reste);
+
+        Facture f = new Facture();
+        f.setIdFacture(idFacture);
+        f.setIdConsultation(idConsultation);
+        f.setIdSf(idSituationFinanciere);
+        f.setTotaleFacture(total);
+        f.setReste(reste);
+        f.setStatut(StatutFacture.EN_ATTENTE);
+        f.setDateFacture(java.time.LocalDateTime.now());
+        return f;
+    }
+
 
     // -------------------------
     // Helpers métier

@@ -21,4 +21,6 @@ public interface CaisseService {
     List<Facture> findBySf(Long idSf);
     List<Facture> findByStatut(StatutFacture statut);
     List<Facture> findByDateBetween(LocalDateTime start, LocalDateTime end);
+
+    Facture creerFactureDepuisConsultation(Long idConsultation, Long idSituationFinanciere);
 }

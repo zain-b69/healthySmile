@@ -11,6 +11,8 @@ import java.util.List;
  */
 public interface SituationFinanciereRepo extends CrudRepository<SituationFinanciere, Long> {
 
+    void create(SituationFinanciere sf);
+
     SituationFinanciere findByDossierMedical(Long idDm);
 
     List<SituationFinanciere> findByStatut(StatutSituationFinanciere statut);
@@ -20,4 +22,6 @@ public interface SituationFinanciereRepo extends CrudRepository<SituationFinanci
     long count();
 
     List<SituationFinanciere> findPage(int limit, int offset);
+
+    Long createAndReturnId(SituationFinanciere sf);
 }

@@ -1,5 +1,8 @@
 package ma.dentalTech.mvc.ui.modules.caisse;
 
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -43,10 +46,12 @@ public class CreateFactureDialog extends JDialog {
 
         root.add(form, BorderLayout.CENTER);
 
-        JButton btnSave = new JButton("Créer");
+        RoundedButton btnSave = new RoundedButton("Créer");
+        ButtonStyles.primary(btnSave);
         btnSave.addActionListener(e -> onSave());
 
-        JButton btnCancel = new JButton("Annuler");
+        RoundedButton btnCancel = new RoundedButton("Annuler");
+        ButtonStyles.primary(btnCancel);
         btnCancel.addActionListener(e -> dispose());
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));

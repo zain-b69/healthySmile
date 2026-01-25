@@ -128,10 +128,6 @@ public class PatientRepositoryImpl implements PatientRepository {
         }
     }
 
-
-
-
-
     @Override
     public void update(Patient p) {
         if (p == null || p.getIdPatient() == null)

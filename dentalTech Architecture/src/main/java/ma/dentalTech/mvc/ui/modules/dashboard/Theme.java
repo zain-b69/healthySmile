@@ -14,6 +14,8 @@ public final class Theme {
     public static final Color CARD = new Color(0x2D64B3);        // cartes bleues
     public static final Color CARD_TEXT = Color.WHITE;
 
+    public static final Color PRIMARY = new Color(0x2D64B3);       // bleu
+    public static final Color PRIMARY_HOVER = new Color(0x2A5AA0); // hover bleu
     public static final Color LOGOUT = new Color(0xD64545);      // rouge
     public static final Color LOGOUT_HOVER = new Color(0xC13E3E);
 

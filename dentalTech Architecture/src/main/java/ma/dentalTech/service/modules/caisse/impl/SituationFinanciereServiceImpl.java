@@ -42,12 +42,8 @@ public class SituationFinanciereServiceImpl implements SituationFinanciereServic
         sf.setCreePar(creePar);
         sf.setModifiePar(creePar);
 
-        try {
-            repo.create(sf);
-            return repo.findById(sf.getIdSf());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        repo.create(sf);
+        return repo.findById(sf.getIdSf());
     }
 
     @Override

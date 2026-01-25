@@ -1,5 +1,8 @@
 package ma.dentalTech.mvc.ui.modules.caisse;
 
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -43,10 +46,12 @@ public class EncaisserDialog extends JDialog {
 
         root.add(form, BorderLayout.CENTER);
 
-        JButton btnOk = new JButton("Valider");
+        RoundedButton btnOk = new RoundedButton("Valider");
+        ButtonStyles.primary(btnOk);
         btnOk.addActionListener(e -> onValidate());
 
-        JButton btnCancel = new JButton("Annuler");
+        RoundedButton btnCancel = new RoundedButton("Annuler");
+        ButtonStyles.primary(btnCancel);
         btnCancel.addActionListener(e -> dispose());
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));

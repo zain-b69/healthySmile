@@ -1,6 +1,8 @@
 package ma.dentalTech.mvc.ui.modules.caisse;
 
 import ma.dentalTech.entities.dossierMedical.Facture;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -49,7 +51,8 @@ public class DetailsFactureDialog extends JDialog {
 
         root.add(form, BorderLayout.CENTER);
 
-        JButton close = new JButton("Fermer");
+        RoundedButton close = new RoundedButton("Fermer");
+        ButtonStyles.danger(close);
         close.addActionListener(e -> dispose());
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -61,16 +64,29 @@ public class DetailsFactureDialog extends JDialog {
     }
 
     private void addRow(JPanel form, GridBagConstraints c, int row, String label, String value) {
-        c.gridx = 0; c.gridy = row; c.weightx = 0;
+        // Label
+        c.gridx = 0;
+        c.gridy = row;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.WEST;
         form.add(new JLabel(label), c);
 
-        JTextField tf = new JTextField(value, 26);
+        // Champ valeur
+        JTextField tf = new JTextField(value);
         tf.setEditable(false);
         tf.setBackground(Color.WHITE);
 
-        c.gridx = 1; c.weightx = 1;
+        c.gridx = 1;
+        c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;          // <<< IMPORTANT
+        c.gridwidth = GridBagConstraints.REMAINDER;     // <<< prend le reste de la ligne
         form.add(tf, c);
+
+        // reset (bonne pratique pour ne pas “polluer” les lignes suivantes)
+        c.gridwidth = 1;
     }
+
 
     private String safe(Object o) {
         return o == null ? "" : String.valueOf(o);

@@ -1,5 +1,6 @@
 package ma.dentalTech.mvc.controllers.modules.patient.impl;
 
+import ma.dentalTech.entities.patient.Antecedent;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.service.modules.patient.api.PatientService;
@@ -54,5 +55,25 @@ public class PatientControllerImpl implements PatientController {
     @Override
     public List<Patient> searchByNomPrenom(String keyword) {
         return service.searchByNomPrenom(keyword);
+    }
+
+    @Override
+    public void addAntecedentToPatient(Long patientId, Long antecedentId) {
+        service.addAntecedentToPatient(patientId, antecedentId);
+    }
+
+    @Override
+    public void removeAntecedentFromPatient(Long patientId, Long antecedentId) {
+        service.removeAntecedentFromPatient(patientId, antecedentId);
+    }
+
+    @Override
+    public List<Antecedent> getAntecedentsOfPatient(Long patientId) {
+        return service.getAntecedentsOfPatient(patientId);
+    }
+
+    @Override
+    public List<Patient> getPatientsByAntecedent(Long antecedentId) {
+        return service.getPatientsByAntecedent(antecedentId);
     }
 }
