@@ -31,8 +31,11 @@ public final class RowMappers {
             case "HABITUDE", "HABITUDE_DE_VIE" -> CategorieAntecedent.HABITUDE_DE_VIE;
             case "AUTRE" -> CategorieAntecedent.AUTRE;
             default -> {
-                // fallback: si DB contient déjà une valeur enum exacte
-                yield CategorieAntecedent.valueOf(v);
+                try {
+                    yield CategorieAntecedent.valueOf(v);
+                } catch (Exception e) {
+                    yield CategorieAntecedent.AUTRE;
+                }
             }
         };
     }

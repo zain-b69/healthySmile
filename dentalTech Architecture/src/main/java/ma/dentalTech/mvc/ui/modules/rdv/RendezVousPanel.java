@@ -1,13 +1,18 @@
 package ma.dentalTech.mvc.ui.modules.rdv;
 
 import ma.dentalTech.entities.agenda.RDV;
+import ma.dentalTech.entities.dossierMedical.Facture;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.entities.users.Medecin;
 import ma.dentalTech.entities.enums.RoleType;
+import ma.dentalTech.mvc.controllers.modules.dossierMedical.util.ConsultationWorkflowController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 import ma.dentalTech.mvc.controllers.modules.agenda.api.RDVController;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 import ma.dentalTech.repository.modules.users.api.MedecinRepository;
 import ma.dentalTech.service.modules.auth.dto.UserPrincipal;
+import ma.dentalTech.service.modules.dossierMedicale.dto.InterventionInput;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,15 +30,16 @@ public class RendezVousPanel extends JPanel {
     private final RDVController rdvController;
     private final PatientController patientController;
     private final MedecinRepository medecinRepo;
-
+    private final ConsultationWorkflowController workflowController;
     private final JComboBox<MedecinItem> cbMedecin = new JComboBox<>();
     private final JTextField tfDate = new JTextField(10);
 
-    private final JButton btnRefresh = new JButton("Rafraîchir");
-    private final JButton btnAdd = new JButton("Nouveau RDV");
-    private final JButton btnConfirm = new JButton("Confirmer");
-    private final JButton btnMove = new JButton("Déplacer");
-    private final JButton btnCancel = new JButton("Annuler");
+    private final RoundedButton btnRefresh = new RoundedButton("Rafraîchir");
+    private final RoundedButton btnAdd = new RoundedButton("Nouveau RDV");
+    private final RoundedButton btnConfirm = new RoundedButton("Confirmer");
+    private final RoundedButton btnMove = new RoundedButton("Déplacer");
+    private final RoundedButton btnCancel = new RoundedButton("Annuler");
+    private final RoundedButton btnOuvrirConsultation = new RoundedButton("Consultation");
 
     private final RdvTableModel model = new RdvTableModel();
     private final JTable table = new JTable(model);
@@ -45,11 +51,14 @@ public class RendezVousPanel extends JPanel {
     public RendezVousPanel(UserPrincipal principal,
                            RDVController rdvController,
                            PatientController patientController,
-                           MedecinRepository medecinRepo) {
+                           MedecinRepository medecinRepo,
+                           ConsultationWorkflowController workflowController
+) {
         this.principal = principal;
         this.rdvController = rdvController;
         this.patientController = patientController;
         this.medecinRepo = medecinRepo;
+        this.workflowController = workflowController;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(12, 12, 12, 12));
@@ -73,6 +82,7 @@ public class RendezVousPanel extends JPanel {
         tfDate.setText(LocalDate.now().toString());
         p.add(tfDate);
 
+        ButtonStyles.primary(btnRefresh);
         p.add(btnRefresh);
         return p;
     }
@@ -89,10 +99,16 @@ public class RendezVousPanel extends JPanel {
     private JComponent buildActions() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 6));
 
+        ButtonStyles.primary(btnAdd);
         p.add(btnAdd);
+        ButtonStyles.primary(btnConfirm);
         p.add(btnConfirm);
+        ButtonStyles.primary(btnMove);
         p.add(btnMove);
+        ButtonStyles.primary(btnCancel);
         p.add(btnCancel);
+        ButtonStyles.primary(btnOuvrirConsultation);
+        p.add(btnOuvrirConsultation);
 
         return p;
     }
@@ -141,6 +157,7 @@ public class RendezVousPanel extends JPanel {
         btnConfirm.addActionListener(e -> onConfirm());
         btnMove.addActionListener(e -> onMove());
         btnCancel.addActionListener(e -> onCancel());
+        btnOuvrirConsultation.addActionListener(e -> creerConsultationCompleteDepuisRdv());
     }
 
     private void refresh() {
@@ -265,6 +282,35 @@ public class RendezVousPanel extends JPanel {
         try {
             rdvController.annulerRendezVous(rdv.getIdRdv(), motif.trim());
             refresh();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void creerConsultationCompleteDepuisRdv() {
+        try {
+            Long selectedRdvId = getSelected().getIdRdv();     // depuis la JTable
+            Long connectedMedecinId = principal.getIdUser();// ou principal.getId()
+            Long idDm = getSelected().getIdDm();               // soit depuis RDV, soit chargé avant
+            Long idSituationFinanciere = getSelected().getIdDm();      // SF du patient (ou input)
+
+            List<InterventionInput> list = new ArrayList<>();
+            list.add(new InterventionInput(1L, 300.0,12));
+            list.add(new InterventionInput(3L, 150.0,21));
+
+            Facture f = workflowController.creerDepuisRdv(
+                    selectedRdvId,
+                    connectedMedecinId,
+                    idDm,
+                    idSituationFinanciere,
+                    list
+            );
+
+            JOptionPane.showMessageDialog(this,
+                    "Consultation + Facture créées. Facture #" + f.getIdFacture(),
+                    "OK",
+                    JOptionPane.INFORMATION_MESSAGE);
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
         }

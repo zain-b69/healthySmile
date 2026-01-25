@@ -20,7 +20,7 @@ public class LoginFrame extends JFrame {
 
     private final AuthService authService;
 
-    private final JTextField loginField = new RoundedTextField(22, "Email");
+    private final JTextField loginField = new RoundedTextField(22, "Login"); //email
     private final JPasswordField passwordField = new RoundedPasswordField(22, "Password");
     private final JLabel statusLabel = new JLabel(" ");
 
@@ -74,7 +74,7 @@ public class LoginFrame extends JFrame {
         card.add(title, gbc);
 
         // Labels + fields
-        JLabel emailLabel = smallLabel("Email");
+        JLabel emailLabel = smallLabel("Login");
         gbc.gridy = 1;
         gbc.insets = new Insets(0, 0, 6, 0);
         card.add(emailLabel, gbc);
@@ -103,10 +103,10 @@ public class LoginFrame extends JFrame {
 //        card.add(linkRow, gbc);
 
         // Sign in button (full width)
-        JButton signInBtn = new JButton("Sign in");
+        RoundedButton signInBtn = new RoundedButton("Sign in");
         signInBtn.setFocusPainted(false);
         signInBtn.setBorderPainted(false);
-        signInBtn.setOpaque(true);
+        signInBtn.setOpaque(false);
         signInBtn.setBackground(BTN_BLUE);
         signInBtn.setForeground(Color.WHITE);
         signInBtn.setFont(new Font("SansSerif", Font.BOLD, 16));

@@ -2,6 +2,8 @@ package ma.dentalTech.mvc.ui.modules.dashboard;
 
 import ma.dentalTech.entities.enums.RoleType;
 import ma.dentalTech.mvc.controllers.modules.dashboard.api.DashboardController;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 import ma.dentalTech.service.modules.auth.dto.UserPrincipal;
 
 import javax.swing.*;
@@ -25,7 +27,7 @@ public class DashboardFrame extends JFrame {
         this.controller = controller;
         this.principal = principal;
 
-        setTitle("HealthySmile / DentalTech");
+        setTitle("HealthySmile");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(1200, 700);
         setLocationRelativeTo(null);
@@ -61,11 +63,11 @@ public class DashboardFrame extends JFrame {
         top.setBackground(Theme.BG);
         top.setBorder(new EmptyBorder(18, 22, 10, 22));
 
-        JLabel title = new JLabel("Dashboard");
+        JLabel title = new JLabel("HealthySmile");
         title.setFont(Theme.h1());
 
-        JButton logout = new JButton("Se Deconnecter");
-        styleLogoutButton(logout);
+        RoundedButton logout = new RoundedButton("Se Deconnecter");
+        ButtonStyles.danger(logout);
         logout.addActionListener(e -> controller.onLogoutRequested());
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
@@ -100,7 +102,8 @@ public class DashboardFrame extends JFrame {
         menu.put(ApplicationPages.DOSSIERS_MEDICAUX, "Dossiers Medicaux");
         menu.put(ApplicationPages.ORDONNANCES, "Ordonnances");
         menu.put(ApplicationPages.CERTIFICATIONS, "Certifications");
-        menu.put(ApplicationPages.CATALOGUE_ACTES, "Catalogue Des actes");
+        menu.put(ApplicationPages.SITUATIONS_FINANCIERES,"Situations Financières");
+        menu.put(ApplicationPages.CATALOGUE, "Catalogue");
         menu.put(ApplicationPages.CAISSE, "Caisse");
         menu.put(ApplicationPages.STATISTIQUES, "Statistiques");
         menu.put(ApplicationPages.USERS, "Utilisateurs");
@@ -115,14 +118,10 @@ public class DashboardFrame extends JFrame {
 
         side.add(Box.createVerticalGlue());
 
-        JButton logout = new JButton("Se Deconnecter");
-        styleLogoutButton(logout);
-        logout.addActionListener(e -> controller.onLogoutRequested());
-        side.add(logout);
-
         side.add(Box.createVerticalStrut(10));
 
-        JButton exit = new JButton("Quitter");
+        RoundedButton exit = new RoundedButton("Quitter");
+        ButtonStyles.danger(exit);
         exit.addActionListener(e -> controller.onExitRequested());
         side.add(exit);
 

@@ -1,10 +1,10 @@
 package ma.dentalTech.repository.modules.facturation.impl;
 
+import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.dossierMedical.Facture;
 import ma.dentalTech.entities.enums.StatutFacture;
 import ma.dentalTech.repository.modules.facturation.api.FactureRepo;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,10 +13,39 @@ import java.util.Optional;
 
 public class FactureRepoImpl implements FactureRepo {
 
-    private final DataSource dataSource;
+    // ✅ no-arg constructor
+    public FactureRepoImpl() {}
 
-    public FactureRepoImpl(DataSource dataSource) {
-        this.dataSource = dataSource;
+    // ------------------------------------------------------------
+    // IMPORTANT : adapte cette méthode si ton SessionFactory diffère
+    // ------------------------------------------------------------
+    private Connection cn() throws SQLException {
+        return SessionFactory.getInstance().getConnection();
+    }
+
+    @Override
+    public Long create(Long idConsultation, Long idSituationFinanciere, double total, double reste) {
+        String sql = """
+            INSERT INTO facture (id_entite, totale_facture, reste, statut, date_facture, id_consultation, id_sf)
+            VALUES (NULL, ?, ?, 'EN_ATTENTE', NOW(), ?, ?)
+            """;
+
+        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setDouble(1, total);
+            ps.setDouble(2, reste);
+            ps.setLong(3, idConsultation);
+            ps.setLong(4, idSituationFinanciere);
+
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getLong(1);
+            }
+            throw new IllegalStateException("INSERT facture OK mais id_facture non récupéré");
+        } catch (SQLException e) {
+            e.printStackTrace(); // TEMP: pour voir la cause dans console
+            throw new RuntimeException("Facture.create failed: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -25,7 +54,7 @@ public class FactureRepoImpl implements FactureRepo {
                 "INSERT INTO facture (totale_facture, reste, statut, date_facture, id_consultation, id_sf) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             setDoubleOrNull(ps, 1, f.getTotaleFacture());
@@ -49,15 +78,13 @@ public class FactureRepoImpl implements FactureRepo {
 
     @Override
     public Facture update(Facture f) {
-        if (f.getIdFacture() == null) {
-            throw new IllegalArgumentException("idFacture est requis pour update");
-        }
+        if (f.getIdFacture() == null) throw new IllegalArgumentException("idFacture requis pour update");
 
         final String sql =
                 "UPDATE facture SET totale_facture=?, reste=?, statut=?, date_facture=?, id_consultation=?, id_sf=? " +
                         "WHERE id_facture=?";
 
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             setDoubleOrNull(ps, 1, f.getTotaleFacture());
@@ -77,6 +104,88 @@ public class FactureRepoImpl implements FactureRepo {
             throw new RuntimeException("Erreur update Facture", e);
         }
     }
+
+    // -------------------------
+    // ✅ Updates ciblés (IMPORTANT)
+    // -------------------------
+
+    @Override
+    public boolean updateReste(Long idFacture, Double reste) {
+        if (idFacture == null) throw new IllegalArgumentException("idFacture requis");
+
+        final String sql = "UPDATE facture SET reste=? WHERE id_facture=?";
+
+        try (Connection cn = cn();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            setDoubleOrNull(ps, 1, reste);
+            ps.setLong(2, idFacture);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur updateReste Facture", e);
+        }
+    }
+
+    @Override
+    public boolean updateStatut(Long idFacture, StatutFacture statut) {
+        if (idFacture == null) throw new IllegalArgumentException("idFacture requis");
+        if (statut == null) throw new IllegalArgumentException("statut requis");
+
+        final String sql = "UPDATE facture SET statut=? WHERE id_facture=?";
+
+        try (Connection cn = cn();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, statut.name());
+            ps.setLong(2, idFacture);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur updateStatut Facture", e);
+        }
+    }
+
+    @Override
+    public boolean updateResteAndStatut(Long idFacture, Double reste, StatutFacture statut) {
+        if (idFacture == null) throw new IllegalArgumentException("idFacture requis");
+        if (statut == null) throw new IllegalArgumentException("statut requis");
+
+        final String sql = "UPDATE facture SET reste=?, statut=? WHERE id_facture=?";
+
+        try (Connection cn = cn();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            setDoubleOrNull(ps, 1, reste);
+            ps.setString(2, statut.name());
+            ps.setLong(3, idFacture);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur updateResteAndStatut Facture", e);
+        }
+    }
+
+    @Override
+    public void updateTotaux(Long idFacture, double total, double reste) {
+        String sql = "UPDATE facture SET totale_facture=?, reste=? WHERE id_facture=?";
+
+        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+            ps.setDouble(1, total);
+            ps.setDouble(2, reste);
+            ps.setLong(3, idFacture);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Facture.updateTotaux failed", e);
+        }
+    }
+
+    // -------------------------
+    // Finders
+    // -------------------------
 
     @Override
     public Optional<Facture> findById(Long idFacture) {
@@ -100,7 +209,7 @@ public class FactureRepoImpl implements FactureRepo {
     public boolean deleteById(Long idFacture) {
         final String sql = "DELETE FROM facture WHERE id_facture=?";
 
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, idFacture);
@@ -157,7 +266,7 @@ public class FactureRepoImpl implements FactureRepo {
     }
 
     private Optional<Facture> queryOne(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             binder.bind(ps);
@@ -173,7 +282,7 @@ public class FactureRepoImpl implements FactureRepo {
     }
 
     private List<Facture> queryList(String sql, StatementBinder binder) {
-        try (Connection cn = dataSource.getConnection();
+        try (Connection cn = cn();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             binder.bind(ps);
@@ -212,7 +321,6 @@ public class FactureRepoImpl implements FactureRepo {
         long idSf = rs.getLong("id_sf");
         f.setIdSf(rs.wasNull() ? null : idSf);
 
-        // relations non chargées ici
         f.setConsultation(null);
         f.setSituationFinanciere(null);
 

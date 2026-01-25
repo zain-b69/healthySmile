@@ -1,6 +1,8 @@
 package ma.dentalTech.mvc.ui.modules.agenda;
 
 import ma.dentalTech.entities.users.Medecin;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 import ma.dentalTech.repository.modules.users.api.MedecinRepository;
 import ma.dentalTech.service.modules.agendas.api.AgendaMensuelService;
 
@@ -62,8 +64,11 @@ public class CreateAgendaMensuelDialog extends JDialog {
         c.gridx = 1; c.gridy = 2; c.weightx = 1;
         form.add(spAnnee, c);
 
-        JButton btnCreate = new JButton("Créer");
-        JButton btnCancel = new JButton("Annuler");
+        RoundedButton btnCreate = new RoundedButton("Créer");
+        RoundedButton btnCancel = new RoundedButton("Annuler");
+
+        ButtonStyles.primary(btnCreate);
+        ButtonStyles.primary(btnCancel);
 
         btnCreate.addActionListener(e -> onCreate());
         btnCancel.addActionListener(e -> dispose());

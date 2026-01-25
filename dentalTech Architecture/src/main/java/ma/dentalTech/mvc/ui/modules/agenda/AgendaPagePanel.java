@@ -1,10 +1,14 @@
 package ma.dentalTech.mvc.ui.modules.agenda;
 
 import ma.dentalTech.entities.users.Medecin;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 import ma.dentalTech.repository.modules.users.api.MedecinRepository;
 import ma.dentalTech.service.modules.agendas.api.AgendaMensuelService;
 import ma.dentalTech.entities.agenda.RDV;
 import ma.dentalTech.repository.modules.agenda.api.RDVRepository;
+import ma.dentalTech.entities.enums.RoleType;
+import ma.dentalTech.service.modules.auth.dto.UserPrincipal;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -17,18 +21,21 @@ public class AgendaPagePanel extends JPanel {
     private final AgendaMensuelService agendaService;
     private final RDVRepository rdvRepo;
     private Long currentAgendaId = null;
+    private final UserPrincipal principal;
 
     private final JComboBox<MedecinItem> cbMedecin = new JComboBox<>();
     private final JSpinner spMois;
     private final JSpinner spAnnee;
 
-    private final JButton btnCreate = new JButton("Créer agenda");
-    private final JButton btnOpen = new JButton("Ouvrir agenda");
+    private final RoundedButton btnCreate = new RoundedButton("Créer agenda");
+    private final RoundedButton btnOpen = new RoundedButton("Ouvrir agenda");
     private final JLabel lblInfo = new JLabel(" ");
 
-    public AgendaPagePanel(MedecinRepository medecinRepo,
+    public AgendaPagePanel(UserPrincipal principal,
+                           MedecinRepository medecinRepo,
                            AgendaMensuelService agendaService,
                            RDVRepository rdvRepo) {
+        this.principal = principal;
         this.medecinRepo = medecinRepo;
         this.agendaService = agendaService;
         this.rdvRepo = rdvRepo;
@@ -71,9 +78,11 @@ public class AgendaPagePanel extends JPanel {
         top.add(spAnnee, c);
 
         c.gridx = 6; c.gridy = 0;
+        ButtonStyles.primary(btnOpen);
         top.add(btnOpen, c);
 
         c.gridx = 7; c.gridy = 0;
+        ButtonStyles.primary(btnCreate);
         top.add(btnCreate, c);
 
         c.gridx = 0; c.gridy = 1; c.gridwidth = 8;
@@ -104,14 +113,23 @@ public class AgendaPagePanel extends JPanel {
 
     private void loadMedecins() {
         cbMedecin.removeAllItems();
-        cbMedecin.addItem(new MedecinItem(null, "-- Choisir --"));
 
-        for (Medecin m : medecinRepo.findAllOrderByNom()) {
-            // IMPORTANT: l'id à utiliser = idUser (pas BaseEntity.id)
-            Long idMedecin = m.getIdUser();
-            cbMedecin.addItem(new MedecinItem(idMedecin, m.getNom() + " (id=" + idMedecin + ")"));
+        RoleType role = safeRole();
+        if (role == RoleType.MEDECIN) {
+            // médecin voit seulement lui-même
+            Long id = principal.getIdUser(); // ou principal.id() selon ton DTO
+            cbMedecin.addItem(new MedecinItem(id, "Moi (id=" + id + ")"));
+            cbMedecin.setEnabled(false);
+            cbMedecin.setSelectedIndex(0);
+        } else {
+            // secrétaire / admin choisit
+            cbMedecin.addItem(new MedecinItem(null, "— Choisir —"));
+            for (Medecin m : medecinRepo.findAllOrderByNom()) {
+                cbMedecin.addItem(new MedecinItem(m.getIdUser(), labelMedecin(m)));
+            }
+            cbMedecin.setEnabled(true);
+            cbMedecin.setSelectedIndex(0);
         }
-        cbMedecin.setSelectedIndex(0);
     }
 
     private void wireActions() {
@@ -201,5 +219,17 @@ public class AgendaPagePanel extends JPanel {
         }
     }
 
+    private RoleType safeRole() {
+        try {
+            return principal.getRole();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String labelMedecin(Medecin m) {
+        String nom = (m.getNom() != null ? m.getNom() : "Médecin");
+        return nom + " (id=" + m.getId() + ")";
+    }
 
 }

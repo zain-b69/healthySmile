@@ -1,10 +1,12 @@
 package ma.dentalTech.configuration;
 
 import ma.dentalTech.mvc.controllers.modules.auth.api.AuthController;
+import ma.dentalTech.mvc.controllers.modules.dossierMedical.util.ConsultationWorkflowController;
 import ma.dentalTech.mvc.controllers.modules.patient.api.PatientController;
 
 import ma.dentalTech.repository.modules.dossierMedical.api.*;
 import ma.dentalTech.repository.modules.dossierMedical.impl.DossierMedicalRepoImpl;
+import ma.dentalTech.repository.modules.facturation.api.FactureRepo;
 import ma.dentalTech.repository.modules.patient.api.AntecedentRepository;
 import ma.dentalTech.repository.modules.patient.api.PatientRepository;
 import ma.dentalTech.repository.modules.users.api.MedecinRepository;
@@ -15,12 +17,11 @@ import ma.dentalTech.service.modules.auth.api.AuthService;
 import ma.dentalTech.service.modules.auth.api.CredentialsValidator;
 import ma.dentalTech.service.modules.auth.api.PasswordEncoder;
 
-import ma.dentalTech.service.modules.dossierMedicale.api.DossierMedicalService;
-import ma.dentalTech.service.modules.dossierMedicale.api.OrdonnanceService;
-import ma.dentalTech.service.modules.dossierMedicale.api.PrescriptionService;
+import ma.dentalTech.service.modules.caisse.api.CaisseService;
+import ma.dentalTech.service.modules.caisse.impl.CaisseServiceImpl;
+import ma.dentalTech.service.modules.dossierMedicale.api.*;
 import ma.dentalTech.service.modules.dossierMedicale.impl.DossierMedicalServiceImpl;
 import ma.dentalTech.service.modules.notifications.api.NotificationService;
-import ma.dentalTech.service.modules.dossierMedicale.api.SituationFinanciereService;
 
 import ma.dentalTech.service.modules.patient.api.AntecedentService;
 import ma.dentalTech.service.modules.patient.api.PatientService;
@@ -76,11 +77,12 @@ public final class ApplicationContext {
             PatientController patientController = new1Dep(patientControllerClass, PatientController.class, PatientService.class, patientService);
             putBean(PatientController.class, "patientController", patientController);
 
-            // ============================================================
-            // 2) OPTIONAL: antecedent repo/service
-            // ============================================================
+// ============================================================
+// 2) OPTIONAL: antecedent repo/service/controller
+// ============================================================
             String antecedentRepoClass = props.getProperty("antecedentRepo");
             if (!isBlank(antecedentRepoClass)) {
+
                 AntecedentRepository antecedentRepo = newNoArg(antecedentRepoClass, AntecedentRepository.class);
                 putBean(AntecedentRepository.class, "antecedentRepo", antecedentRepo);
 
@@ -93,6 +95,19 @@ public final class ApplicationContext {
                             antecedentRepo
                     );
                     putBean(AntecedentService.class, "antecedentService", antecedentService);
+
+                    // ✅ controller
+                    String antecedentControllerClass = props.getProperty("antecedentController");
+                    if (!isBlank(antecedentControllerClass)) {
+                        var ctrl = (ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentController)
+                                Class.forName(antecedentControllerClass)
+                                        .getDeclaredConstructor(AntecedentService.class)
+                                        .newInstance(antecedentService);
+
+                        putBean(ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentController.class,
+                                "antecedentController",
+                                ctrl);
+                    }
                 }
             }
 
@@ -221,6 +236,32 @@ public final class ApplicationContext {
 
                 putBean(UserManagementService.class, "userManagementService", userService);
             }
+
+// ============================================================
+// PASSWORD MANAGEMENT SERVICE (optional)  (UtilisateurRepo + PasswordEncoder + CredentialsValidator)
+// ============================================================
+            String passwordManagementServiceClass = props.getProperty("passwordManagementService");
+            if (!isBlank(passwordManagementServiceClass)) {
+
+                UtilisateurRepository utilisateurRepo = getBean(UtilisateurRepository.class);
+                PasswordEncoder encoder = getBean(PasswordEncoder.class);
+                CredentialsValidator validator = getBean(CredentialsValidator.class);
+
+                if (utilisateurRepo == null)
+                    throw new IllegalStateException("utilisateurRepo bean not found (required for passwordManagementService)");
+                if (encoder == null)
+                    throw new IllegalStateException("passwordEncoder bean not found (required for passwordManagementService)");
+                if (validator == null)
+                    throw new IllegalStateException("credentialsValidator bean not found (required for passwordManagementService)");
+
+                Object svc = Class.forName(passwordManagementServiceClass)
+                        .getDeclaredConstructor(UtilisateurRepository.class, PasswordEncoder.class, CredentialsValidator.class)
+                        .newInstance(utilisateurRepo, encoder, validator);
+
+                contextByName.put("passwordManagementService", svc);
+                context.put(ma.dentalTech.service.modules.users.api.PasswordManagementService.class, svc);
+            }
+
 
             // ============================================================
             // 6) NOTIFICATIONS (optional)
@@ -479,6 +520,290 @@ public final class ApplicationContext {
                 putBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class, "dossierMedicalController", dmController);
             }
 
+// ============ ACTE (Catalogue) ============
+            String acteRepoClass = props.getProperty("acteRepo");
+            if (!isBlank(acteRepoClass)) {
+                var repo = newNoArg(acteRepoClass, ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class);
+                putBean(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class, "acteRepo", repo);
+            }
+
+            String acteServiceClass = props.getProperty("acteService");
+            if (!isBlank(acteServiceClass)) {
+                var repo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class);
+                if (repo == null) throw new IllegalStateException("acteRepo missing for acteService");
+
+                var svc = (ma.dentalTech.service.modules.dossierMedicale.api.ActeService) Class.forName(acteServiceClass)
+                        .getDeclaredConstructor(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class)
+                        .newInstance(repo);
+
+                putBean(ma.dentalTech.service.modules.dossierMedicale.api.ActeService.class, "acteService", svc);
+            }
+
+            String acteControllerClass = props.getProperty("acteController");
+            if (!isBlank(acteControllerClass)) {
+                var svc = getBean(ma.dentalTech.service.modules.dossierMedicale.api.ActeService.class);
+                if (svc == null) throw new IllegalStateException("acteService missing for acteController");
+
+                Object ctrl = Class.forName(acteControllerClass)
+                        .getDeclaredConstructor(ma.dentalTech.service.modules.dossierMedicale.api.ActeService.class)
+                        .newInstance(svc);
+
+                contextByName.put("acteController", ctrl);
+                context.put(ma.dentalTech.mvc.controllers.modules.acte.api.ActeController.class, ctrl);
+            }
+            String factureRepoClass = props.getProperty("factureRepo");
+            if (!isBlank(factureRepoClass)) {
+                var factureRepo = newNoArg(factureRepoClass, ma.dentalTech.repository.modules.facturation.api.FactureRepo.class);
+                putBean(ma.dentalTech.repository.modules.facturation.api.FactureRepo.class, "factureRepo", factureRepo);
+            }
+
+            String consultationRepoClass = props.getProperty("consultationRepo");
+            if (!isBlank(consultationRepoClass)) {
+                var repo = newNoArg(
+                        consultationRepoClass,
+                        ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo.class
+                );
+                putBean(
+                        ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo.class,
+                        "consultationRepo",
+                        repo
+                );
+            } else {
+                throw new IllegalStateException("consultationRepo manquant dans beans.properties");
+            }
+
+            String interventionMedecinRepoClass = props.getProperty("interventionMedecinRepo");
+            if (!isBlank(interventionMedecinRepoClass)) {
+                Object repo = Class.forName(interventionMedecinRepoClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                contextByName.put("interventionMedecinRepo", repo);
+                context.put(ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepo.class, repo);
+            }
+
+            String interventionMedecinServiceClass = props.getProperty("interventionMedecinService");
+            if (!isBlank(interventionMedecinServiceClass)) {
+                var repo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepo.class);
+                var acteRepo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class);
+
+                if (repo == null) throw new IllegalStateException("interventionMedecinRepo missing for interventionMedecinService");
+                if (acteRepo == null) throw new IllegalStateException("acteRepository missing for interventionMedecinService");
+
+                Object svc = Class.forName(interventionMedecinServiceClass)
+                        .getDeclaredConstructor(
+                                ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepo.class,
+                                ma.dentalTech.repository.modules.dossierMedical.api.ActeRepository.class
+                        )
+                        .newInstance(repo,acteRepo);
+
+                contextByName.put("interventionMedecinService", svc);
+                context.put(ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService.class, svc);
+            }
+
+            // =====================
+// CAISSE SERVICE (SANS DATASOURCE)
+// =====================
+            FactureRepo factureRepo =
+                    getBean(ma.dentalTech.repository.modules.facturation.api.FactureRepo.class);
+
+            ConsultationRepo consultationRepo =
+                    getBean(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo.class);
+
+            InterventionMedecinService interventionMedecinService =
+                    getBean(ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService.class);
+
+            if (factureRepo == null)
+                throw new IllegalStateException("factureRepo manquant pour CaisseService");
+            if (consultationRepo == null)
+                throw new IllegalStateException("consultationRepo manquant pour CaisseService");
+            if (interventionMedecinService == null)
+                throw new IllegalStateException("interventionMedecinService manquant pour CaisseService");
+
+            CaisseService caisseService = new CaisseServiceImpl(
+                    factureRepo,
+                    consultationRepo,
+                    interventionMedecinService
+            );
+
+            putBean(
+                    ma.dentalTech.service.modules.caisse.api.CaisseService.class,
+                    "caisseService",
+                    caisseService
+            );
+
+            String caisseControllerClass = props.getProperty("caisseController");
+            if (!isBlank(caisseControllerClass)) {
+                var cs = getBean(ma.dentalTech.service.modules.caisse.api.CaisseService.class);
+                if (cs == null) throw new IllegalStateException("caisseService missing for caisseController");
+
+                Object ctrl = Class.forName(caisseControllerClass)
+                        .getDeclaredConstructor(ma.dentalTech.service.modules.caisse.api.CaisseService.class)
+                        .newInstance(cs);
+
+                contextByName.put("caisseController", ctrl);
+                context.put(ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController.class, ctrl);
+            }
+
+            String cabinetRepoClass = props.getProperty("cabinetRepo");
+            if (!isBlank(cabinetRepoClass)) {
+                Object repo = Class.forName(cabinetRepoClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                contextByName.put("cabinetRepo", repo);
+                context.put(ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository.class, repo);
+            }
+
+            // =====================
+            // STATISTIQUES (Repo → Service → Controller)
+            // =====================
+            String statistiquesRepoClass = props.getProperty("statistiquesRepo");
+            if (!isBlank(statistiquesRepoClass)) {
+                Object repo = Class.forName(statistiquesRepoClass)
+                        .getDeclaredConstructor()
+                        .newInstance();
+
+                contextByName.put("statistiquesRepo", repo);
+                context.put(ma.dentalTech.repository.modules.cabinet.api.StatistiquesRepository.class, repo);
+            }
+
+            String statistiquesServiceClass = props.getProperty("statistiquesService");
+            if (!isBlank(statistiquesServiceClass)) {
+                var statsRepo = getBean(ma.dentalTech.repository.modules.cabinet.api.StatistiquesRepository.class);
+                var cabinetRepo = getBean(ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository.class);
+
+                if (statsRepo == null) throw new IllegalStateException("statistiquesRepo missing for statistiquesService");
+                if (cabinetRepo == null) throw new IllegalStateException("cabinetMedicalRepository missing for statistiquesService");
+
+                Object svc = Class.forName(statistiquesServiceClass)
+                        .getDeclaredConstructor(
+                                ma.dentalTech.repository.modules.cabinet.api.StatistiquesRepository.class,
+                                ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository.class
+                        )
+                        .newInstance(statsRepo, cabinetRepo);
+
+                contextByName.put("statistiquesService", svc);
+                context.put(ma.dentalTech.service.modules.cabinet.api.StatistiquesService.class, svc);
+            }
+
+            String statistiquesControllerClass = props.getProperty("statistiquesController");
+            if (!isBlank(statistiquesControllerClass)) {
+                var svc = getBean(ma.dentalTech.service.modules.cabinet.api.StatistiquesService.class);
+                if (svc == null) throw new IllegalStateException("statistiquesService missing for statistiquesController");
+
+                Object ctrl = Class.forName(statistiquesControllerClass)
+                        .getDeclaredConstructor(ma.dentalTech.service.modules.cabinet.api.StatistiquesService.class)
+                        .newInstance(svc);
+
+                contextByName.put("statistiquesController", ctrl);
+                context.put(ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController.class, ctrl);
+            }
+// ============================================================
+// USERS Controller (UserManagementService + PasswordManagementService)
+// ============================================================
+            String usersControllerClass = props.getProperty("usersController");
+            if (!isBlank(usersControllerClass)) {
+
+                var userSvc = getBean(ma.dentalTech.service.modules.users.api.UserManagementService.class);
+                var pwdSvc  = getBean(ma.dentalTech.service.modules.users.api.PasswordManagementService.class);
+
+                if (userSvc == null) throw new IllegalStateException("userManagementService missing for usersController");
+                if (pwdSvc == null)  throw new IllegalStateException("passwordManagementService missing for usersController");
+
+                var ctrl = (ma.dentalTech.mvc.controllers.modules.users.api.UsersController)
+                        Class.forName(usersControllerClass)
+                                .getDeclaredConstructor(
+                                        ma.dentalTech.service.modules.users.api.UserManagementService.class,
+                                        ma.dentalTech.service.modules.users.api.PasswordManagementService.class
+                                )
+                                .newInstance(userSvc, pwdSvc);
+
+                putBean(ma.dentalTech.mvc.controllers.modules.users.api.UsersController.class, "usersController", ctrl);
+            }
+
+            // =====================
+// INTERVENTION MEDECIN (Repo → Service → Controller)
+// =====================
+//            String interventionMedecinControllerClass = props.getProperty("interventionMedecinController");
+//            if (!isBlank(interventionMedecinControllerClass)) {
+//                var svc = getBean(ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService.class);
+//
+//                if (svc == null) throw new IllegalStateException("interventionMedecinService missing for interventionMedecinController");
+//
+//                Object ctrl = Class.forName(interventionMedecinControllerClass)
+//                        .getDeclaredConstructor(
+//                                ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService.class
+//                        )
+//                        .newInstance(svc);
+//
+//                contextByName.put("interventionMedecinController", ctrl);
+//                context.put(ma.dentalTech.mvc.controllers.modules.dossierMedical.api.InterventionMedecinController.class, ctrl);
+//            }
+
+// =====================
+// CONSULTATION Service
+// =====================
+            String consultationServiceClass = props.getProperty("consultationService");
+            if (!isBlank(consultationServiceClass)) {
+                var repo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo.class);
+                if (repo == null) throw new IllegalStateException("consultationRepo missing for consultationService");
+
+                var svc = (ma.dentalTech.service.modules.dossierMedicale.api.ConsultationService)
+                        Class.forName(consultationServiceClass)
+                                .getDeclaredConstructor(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo.class)
+                                .newInstance(repo);
+
+                putBean(ma.dentalTech.service.modules.dossierMedicale.api.ConsultationService.class, "consultationService", svc);
+            }
+            // =====================
+// CONSULTATION WORKFLOW SERVICE
+// =====================
+            String workflowServiceClass = props.getProperty("workflowService");
+            if (!isBlank(workflowServiceClass)) {
+
+                var consultationService = getBean(ma.dentalTech.service.modules.dossierMedicale.api.ConsultationService.class);
+                var interventionService = getBean(ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService.class);
+
+                if (consultationService == null) throw new IllegalStateException("consultationService missing for workflowService");
+                if (interventionService == null) throw new IllegalStateException("interventionMedecinService missing for workflowService");
+                if (caisseService == null) throw new IllegalStateException("caisseService missing for workflowService");
+
+                Object svc = Class.forName(workflowServiceClass)
+                        .getDeclaredConstructor(
+                                ma.dentalTech.service.modules.dossierMedicale.api.ConsultationService.class,
+                                ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService.class,
+                                ma.dentalTech.service.modules.caisse.api.CaisseService.class
+                        )
+                        .newInstance(consultationService, interventionService, caisseService);
+
+                putBean(ma.dentalTech.service.modules.dossierMedicale.util.ConsultationWorkflowService.class,
+                        "workflowService",
+                        (ma.dentalTech.service.modules.dossierMedicale.util.ConsultationWorkflowService) svc);
+            }
+
+            String workflowControllerClass = props.getProperty("consultationWorkflowController");
+            if (!isBlank(workflowControllerClass)) {
+
+                var consultationService = getBean(ma.dentalTech.service.modules.dossierMedicale.api.ConsultationService.class);
+                var interventionService = getBean(ma.dentalTech.service.modules.dossierMedicale.api.InterventionMedecinService.class);
+                var workflowService = getBean(ma.dentalTech.service.modules.dossierMedicale.util.ConsultationWorkflowService.class);
+
+                if (consultationService == null) throw new IllegalStateException("consultationService missing");
+                if (interventionService == null) throw new IllegalStateException("interventionMedecinService missing");
+                if (caisseService == null) throw new IllegalStateException("caisseService missing");
+                if (workflowService == null) throw new IllegalStateException("workflowService missing");
+
+                var ctrl = Class.forName(workflowControllerClass)
+                        .getDeclaredConstructor(
+                                ma.dentalTech.service.modules.dossierMedicale.util.ConsultationWorkflowService.class
+                        )
+                        .newInstance(workflowService);
+
+                putBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.util.ConsultationWorkflowController.class,
+                        "consultationWorkflowController",
+                        (ma.dentalTech.mvc.controllers.modules.dossierMedical.util.ConsultationWorkflowController) ctrl);
+            }
 
             // ============================================================
             // dashboard
@@ -494,6 +819,12 @@ public final class ApplicationContext {
                 var agendaService = getBean(ma.dentalTech.service.modules.agendas.api.AgendaMensuelService.class);
                 var rdvRepo = getBean(ma.dentalTech.repository.modules.agenda.api.RDVRepository.class);
                 var dossierMedicalController = getBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class);
+                var acteController = getBean(ma.dentalTech.mvc.controllers.modules.acte.api.ActeController.class);
+                var caisseController = getBean(ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController.class);
+                var statistiquesController = getBean(ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController.class);
+                var usersController = getBean(ma.dentalTech.mvc.controllers.modules.users.api.UsersController.class);
+                var antecedentController = getBean(ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentController.class);
+                var workflowController = getBean(ma.dentalTech.mvc.controllers.modules.dossierMedical.util.ConsultationWorkflowController.class);
 
                 if (dossierMedicalController == null)
                     throw new IllegalStateException("dossierMedicalController missing for dashboardController");
@@ -511,6 +842,16 @@ public final class ApplicationContext {
                     throw new IllegalStateException("agendaMensuelController missing for dashboardController");
                 if (agendaService == null)
                     throw new IllegalStateException("agendaMensuelService missing for dashboardController");
+                if (acteController == null)
+                    throw new IllegalStateException("acteController missing for dashboardController");
+                if (caisseController == null)
+                    throw new IllegalStateException("caisseController missing for dashboardController");
+                if (statistiquesController == null)
+                    throw new IllegalStateException("statistiquesController missing for dashboardController");
+                if (usersController == null)
+                    throw new IllegalStateException("usersController missing for dashboardController");
+                if (workflowController == null)
+                    throw new IllegalStateException("workflowController missing for dashboardController");
 
                 DashboardController dashboardController = (DashboardController) Class.forName(dashboardControllerClass)
                         .getDeclaredConstructor(
@@ -522,7 +863,14 @@ public final class ApplicationContext {
                                 ma.dentalTech.repository.modules.users.api.MedecinRepository.class,
                                 ma.dentalTech.mvc.controllers.modules.agenda.api.AgendaMensuelController.class,
                                 ma.dentalTech.service.modules.agendas.api.AgendaMensuelService.class,
-                                ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class   // ✅ ajouté
+                                ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController.class,
+                                ma.dentalTech.mvc.controllers.modules.acte.api.ActeController.class,
+                                ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController.class,
+                                ma.dentalTech.mvc.controllers.modules.statistiques.api.StatistiquesController.class,
+                                ma.dentalTech.mvc.controllers.modules.users.api.UsersController.class,
+                                ma.dentalTech.mvc.controllers.modules.patient.api.AntecedentController.class,
+                                ma.dentalTech.mvc.controllers.modules.dossierMedical.util.ConsultationWorkflowController.class
+                                // ✅ ajouté
                         )
                         .newInstance(
                                 authorizationService,
@@ -533,7 +881,14 @@ public final class ApplicationContext {
                                 medecinRepo,
                                 agendaController,
                                 agendaService,
-                                dossierMedicalController   // ✅ ajouté
+                                dossierMedicalController,
+                                acteController,
+                                caisseController,
+                                statistiquesController,
+                                usersController,
+                                antecedentController,
+                                workflowController
+                                // ✅ ajouté
                         );
 
                 putBean(DashboardController.class, "dashboardController", dashboardController);
@@ -632,7 +987,6 @@ public final class ApplicationContext {
                 if (!isBlank(statsServiceClass)) {
                     var consRepo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.ConsultationRepo.class);
                     var imRepo = getBean(ma.dentalTech.repository.modules.dossierMedical.api.InterventionMedecinRepo.class);
-                    var factureRepo = getBean(ma.dentalTech.repository.modules.facturation.api.FactureRepo.class);
                     if (consRepo == null || imRepo == null || factureRepo == null) throw new IllegalStateException("Deps missing for statistiquesService");
 
                     Object statsService = Class.forName(statsServiceClass)

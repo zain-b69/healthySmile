@@ -1,5 +1,6 @@
 package ma.dentalTech.mvc.controllers.modules.patient.api;
 
+import ma.dentalTech.entities.patient.Antecedent;
 import ma.dentalTech.entities.patient.Patient;
 
 import java.sql.SQLException;
@@ -18,4 +19,9 @@ public interface PatientController {
     Optional<Patient> findByEmail(String email);
     Optional<Patient> findByTelephone(String telephone);
     List<Patient> searchByNomPrenom(String keyword);
+    void addAntecedentToPatient(Long patientId, Long antecedentId);
+    void removeAntecedentFromPatient(Long patientId, Long antecedentId);
+    List<Antecedent> getAntecedentsOfPatient(Long patientId);
+    List<Patient> getPatientsByAntecedent(Long antecedentId);
+
 }

@@ -13,15 +13,12 @@ import java.util.List;
 
 public class StatistiquesRepositoryImpl implements StatistiquesRepository {
 
-    // ========== AJOUTER CES 2 LIGNES ==========
     private final SessionFactory sessionFactory = SessionFactory.getInstance();
 
     private Connection cn() throws SQLException {
         return sessionFactory.getConnection();
     }
-    // ==========================================
 
-    // ---------- BASE SELECT QUERY ----------
     private static final String BASE_SELECT = """
         SELECT 
             s.id_statistique,
@@ -45,21 +42,16 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
         LEFT JOIN entite e ON s.id_entite = e.id_entite
     """;
 
-    // ---------- CRUD ----------
-
     @Override
     public List<Statistiques> findAll() {
         String sql = BASE_SELECT + " ORDER BY s.date_fin DESC";
-
         List<Statistiques> out = new ArrayList<>();
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql);
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                out.add(RowMappers.mapStatistiques(rs));
-            }
+            while (rs.next()) out.add(RowMappers.mapStatistiques(rs));
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la récupération des statistiques", e);
@@ -71,14 +63,16 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     public Statistiques findById(Long id) {
         String sql = BASE_SELECT + " WHERE s.id_statistique = ?";
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setLong(1, id);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return RowMappers.mapStatistiques(rs);
                 return null;
             }
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la récupération de la statistique", e);
         }
@@ -94,8 +88,8 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
         """;
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setLong(1, s.getIdCabinet());
             ps.setString(2, s.getPeriode());
@@ -114,6 +108,7 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) s.setIdStatistique(keys.getLong(1));
             }
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -131,10 +126,9 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
             WHERE id_statistique=?
             """;
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-            // Removed id_entite parameter
             ps.setLong(1, s.getIdCabinet());
             ps.setString(2, s.getPeriode());
             ps.setDate(3, Date.valueOf(s.getDateDebut()));
@@ -164,8 +158,8 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM statistiques WHERE id_statistique=?";
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setLong(1, id);
             ps.executeUpdate();
@@ -174,8 +168,6 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
             throw new RuntimeException(e);
         }
     }
-
-    // ---------- FINDERS ----------
 
     @Override
     public List<Statistiques> findByCabinet(Long cabinetId) {
@@ -205,13 +197,15 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     public boolean existsById(Long id) {
         String sql = "SELECT 1 FROM statistiques WHERE id_statistique=?";
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setLong(1, id);
+
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -221,12 +215,13 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     public long count() {
         String sql = "SELECT COUNT(*) FROM statistiques";
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql);
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             rs.next();
             return rs.getLong(1);
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -238,13 +233,11 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
         return findList(sql, limit, offset);
     }
 
-    // ---------- UTILS ----------
-
     private List<Statistiques> findList(String sql, Object... params) {
         List<Statistiques> out = new ArrayList<>();
 
-        // MODIFIER : enlever Connection du try
-        try (PreparedStatement ps = cn().prepareStatement(sql)) {
+        try (Connection con = cn();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
             for (int i = 0; i < params.length; i++) {
                 ps.setObject(i + 1, params[i]);
@@ -253,9 +246,11 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(RowMappers.mapStatistiques(rs));
             }
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
         return out;
     }
 }

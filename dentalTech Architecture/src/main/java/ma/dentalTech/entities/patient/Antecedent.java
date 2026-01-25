@@ -21,4 +21,10 @@ public class Antecedent extends BaseEntity {
     private String nom;          // antecedents.nom
     private CategorieAntecedent categorie;    // antecedents.categorie
     private NiveauRisque niveauDeRisque; // antecedents.niveau_de_risque
+
+    @Override
+    public String toString() {
+        return nom + " (" + categorie + ", " + niveauDeRisque + ")";
+    }
+
 }

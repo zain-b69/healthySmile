@@ -5,6 +5,7 @@ import ma.dentalTech.entities.enums.StatutSituationFinanciere;
 import ma.dentalTech.repository.modules.dossierMedical.api.SituationFinanciereRepo;
 import ma.dentalTech.service.modules.dossierMedicale.api.SituationFinanciereService;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 
@@ -146,6 +147,24 @@ public class SituationFinanciereServiceImpl implements SituationFinanciereServic
         if (sf.getEnPromo() == null) {
             throw new IllegalArgumentException("enPromo ne peut pas être null");
         }
+    }
+
+    @Override
+    public Long createForDossierMedical(Long idDm) {
+        if (idDm == null) throw new IllegalArgumentException("idDm ne peut pas être null");
+
+        SituationFinanciere sf = new SituationFinanciere();
+        sf.setIdDm(idDm);
+        sf.setTotaleDesActes(0.0);
+        sf.setTotalePaye(0.0);
+        sf.setCredit(0.0);
+        sf.setEnPromo(false);
+        sf.setStatut(StatutSituationFinanciere.EN_CREDIT);
+
+        validateOrThrow(sf);
+
+        // il faut que ton repo ait un create(...) qui retourne l'id généré
+        return situationFinanciereRepo.createAndReturnId(sf);
     }
 
     // =========================

@@ -21,7 +21,7 @@ public final class PageAccess {
                     ApplicationPages.DOSSIERS_MEDICAUX,
                     ApplicationPages.ORDONNANCES,
                     ApplicationPages.CERTIFICATIONS,
-                    ApplicationPages.CATALOGUE_ACTES,
+                    ApplicationPages.CATALOGUE,
                     ApplicationPages.CAISSE,               // ou SITUATION_FINANCIERE
                     ApplicationPages.STATISTIQUES
             );

@@ -2,6 +2,8 @@ package ma.dentalTech.mvc.ui.modules.dossierMedical;
 
 import ma.dentalTech.entities.dossierMedical.DossierMedical;
 import ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController;
+import ma.dentalTech.mvc.ui.common.ButtonStyles;
+import ma.dentalTech.mvc.ui.common.RoundedButton;
 import ma.dentalTech.mvc.ui.modules.dossierMedical.DossierMedicalDetailsDialog;
 
 import javax.swing.*;
@@ -18,10 +20,10 @@ public class DossierMedicalPanel extends JPanel {
     private final JTextField startField = new JTextField(10); // YYYY-MM-DD
     private final JTextField endField = new JTextField(10);
 
-    private final JButton loadAllBtn = new JButton("Tout");
-    private final JButton searchBetweenBtn = new JButton("Rechercher période");
-    private final JButton createBtn = new JButton("Créer dossier");
-    private final JButton openBtn = new JButton("Ouvrir");
+    private final RoundedButton loadAllBtn = new RoundedButton("Tout");
+    private final RoundedButton searchBetweenBtn = new RoundedButton("Rechercher période");
+    private final RoundedButton createBtn = new RoundedButton("Créer dossier");
+    private final RoundedButton openBtn = new RoundedButton("Ouvrir");
 
     private final DefaultTableModel model = new DefaultTableModel(
             new Object[]{"ID_DM", "ID_PATIENT", "DATE_CREATION"}, 0
@@ -36,19 +38,23 @@ public class DossierMedicalPanel extends JPanel {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.add(new JLabel("ID Patient:"));
         top.add(idPatientField);
+        ButtonStyles.primary(createBtn);
         top.add(createBtn);
 
         top.add(new JLabel("Start (YYYY-MM-DD):"));
         top.add(startField);
         top.add(new JLabel("End:"));
         top.add(endField);
+        ButtonStyles.primary(searchBetweenBtn);
         top.add(searchBetweenBtn);
+        ButtonStyles.primary(loadAllBtn);
         top.add(loadAllBtn);
 
         add(top, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        ButtonStyles.primary(openBtn);
         bottom.add(openBtn);
         add(bottom, BorderLayout.SOUTH);
 
