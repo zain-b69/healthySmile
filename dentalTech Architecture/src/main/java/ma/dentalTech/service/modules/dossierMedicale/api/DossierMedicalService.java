@@ -27,4 +27,7 @@ public interface DossierMedicalService {
     DossierMedical corrigerDateCreation(Long idDm, LocalDate nouvelleDate);
 
     List<DossierMedical> listAll();
+
+    // NOUVELLE MÉTHODE
+    boolean deleteById(Long idDm);
 }

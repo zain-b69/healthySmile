@@ -18,6 +18,9 @@ public final class Theme {
     public static final Color PRIMARY_HOVER = new Color(0x2A5AA0); // hover bleu
     public static final Color LOGOUT = new Color(0xD64545);      // rouge
     public static final Color LOGOUT_HOVER = new Color(0xC13E3E);
+    public static final Color SECONDARY = new Color(230, 233, 240);        // gris clair moderne
+    public static final Color SECONDARY_HOVER = new Color(210, 214, 222);  // hover doux
+    public static final Color TEXT_DARK = new Color(40, 40, 40);
 
     public static Font h1() { return new Font("SansSerif", Font.BOLD, 28); }
     public static Font h2() { return new Font("SansSerif", Font.BOLD, 20); }

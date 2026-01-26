@@ -2,6 +2,8 @@ package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.agenda.AgendaMensuel;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.agenda.api.AgendaMensuelRepository;
 
@@ -54,7 +56,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
     }
 
     @Override
-    public void create(AgendaMensuel agenda) {
+    public AgendaMensuel create(AgendaMensuel agenda) {
         String sql = "INSERT INTO agenda(mois, annee, id_medecin) VALUES (?, ?, ?)";
 
         // MODIFIER : enlever Connection du try
@@ -70,10 +72,11 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     @Override
-    public void update(AgendaMensuel agenda) {
+    public AgendaMensuel update(AgendaMensuel agenda) {
         String sql = "UPDATE agenda SET mois = ?, annee = ?, id_medecin = ? WHERE id_agenda = ?";
 
         // MODIFIER : enlever Connection du try
@@ -86,6 +89,7 @@ public class AgendaMensuelRepositoryImpl implements AgendaMensuelRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     @Override

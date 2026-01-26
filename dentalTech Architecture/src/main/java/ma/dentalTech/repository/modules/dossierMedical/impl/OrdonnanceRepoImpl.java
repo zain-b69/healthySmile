@@ -70,7 +70,7 @@ public class OrdonnanceRepoImpl implements OrdonnanceRepo {
     }
 
     @Override
-    public void create(Ordonnance o) {
+    public Ordonnance create(Ordonnance o) {
         if (o == null) throw new IllegalArgumentException("Ordonnance is null");
 
         try {
@@ -98,10 +98,11 @@ public class OrdonnanceRepoImpl implements OrdonnanceRepo {
         } catch (SQLException ex) {
             throw new RuntimeException("Ordonnance.create failed", ex);
         }
+        return null;
     }
 
     @Override
-    public void update(Ordonnance o) {
+    public Ordonnance update(Ordonnance o) {
         if (o == null || o.getIdOrd() == null)
             throw new IllegalArgumentException("Ordonnance.idOrd is null");
 
@@ -119,8 +120,13 @@ public class OrdonnanceRepoImpl implements OrdonnanceRepo {
             ps.setObject(3, o.getIdDm(), Types.BIGINT);
             ps.setLong(4, o.getIdOrd());
 
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                throw new SQLException("Aucune ordonnance mise à jour, id=" + o.getIdOrd());
+            }
+
             updateEntiteTouch(o.getId(), o.getModifiePar());
+            return o;
         } catch (SQLException ex) {
             throw new RuntimeException("Ordonnance.update failed", ex);
         }

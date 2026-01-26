@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.patient.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.enums.CategorieAntecedent;
 import ma.dentalTech.entities.enums.NiveauRisque;
 import ma.dentalTech.entities.patient.Antecedent;
@@ -79,7 +81,7 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
     }
 
     @Override
-    public void create(Antecedent a) {
+    public Antecedent create(Antecedent a) {
         if (a == null) throw new IllegalArgumentException("Antecedent is null");
 
         try {
@@ -113,10 +115,11 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Antecedent.create failed", ex);
         }
+        return null;
     }
 
     @Override
-    public void update(Antecedent a) {
+    public Antecedent update(Antecedent a) {
         if (a == null || a.getIdAntecedent() == null)
             throw new IllegalArgumentException("Antecedent.idAntecedent is null");
 
@@ -148,6 +151,7 @@ public class AntecedentRepositoryImpl implements AntecedentRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Antecedent.update failed", ex);
         }
+        return null;
     }
 
     @Override

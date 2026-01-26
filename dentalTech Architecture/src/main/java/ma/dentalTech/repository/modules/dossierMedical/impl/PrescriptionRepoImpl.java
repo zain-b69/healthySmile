@@ -2,6 +2,7 @@ package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.dossierMedical.Medicament;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
 import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.dossierMedical.PrescriptionMedicament;
 import ma.dentalTech.repository.common.RowMappers;
@@ -65,7 +66,7 @@ public class PrescriptionRepoImpl implements PrescriptionRepo {
     }
 
     @Override
-    public void create(Prescription p) {
+    public Prescription create(Prescription p) {
         if (p == null) throw new IllegalArgumentException("Prescription is null");
         try {
             Long idEntite = insertEntiteIfNeeded(p.getCreePar(), p.getModifiePar(), p.getId());
@@ -93,10 +94,12 @@ public class PrescriptionRepoImpl implements PrescriptionRepo {
         } catch (SQLException ex) {
             throw new RuntimeException("Prescription.create failed", ex);
         }
+        return p;
     }
 
+
     @Override
-    public void update(Prescription p) {
+    public Prescription update(Prescription p) {
         if (p == null || p.getIdPr() == null)
             throw new IllegalArgumentException("Prescription.idPr is null");
 
@@ -123,6 +126,7 @@ public class PrescriptionRepoImpl implements PrescriptionRepo {
         } catch (SQLException ex) {
             throw new RuntimeException("Prescription.update failed", ex);
         }
+        return p;
     }
 
     @Override

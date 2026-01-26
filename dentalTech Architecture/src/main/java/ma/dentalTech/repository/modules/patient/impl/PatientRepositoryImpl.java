@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.patient.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.patient.Antecedent;
 import ma.dentalTech.entities.patient.Patient;
 import ma.dentalTech.repository.common.RowMappers;
@@ -66,7 +68,7 @@ public class PatientRepositoryImpl implements PatientRepository {
     }
 
     @Override
-    public void create(Patient p) {
+    public Patient create(Patient p) {
         System.out.println(">>> PatientRepositoryImpl.CREATE RUNNING (v2) " + this.getClass().getName());
         if (p == null) throw new IllegalArgumentException("Patient is null");
 
@@ -126,10 +128,11 @@ public class PatientRepositoryImpl implements PatientRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Patient.create failed", ex);
         }
+        return null;
     }
 
     @Override
-    public void update(Patient p) {
+    public Patient update(Patient p) {
         if (p == null || p.getIdPatient() == null)
             throw new IllegalArgumentException("Patient.idPatient is null");
 
@@ -160,6 +163,7 @@ public class PatientRepositoryImpl implements PatientRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Patient.update failed", ex);
         }
+        return null;
     }
 
     @Override
@@ -182,7 +186,12 @@ public class PatientRepositoryImpl implements PatientRepository {
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (SQLException ex) {
-            throw new RuntimeException("Patient.deleteById failed", ex);
+            throw new RuntimeException(
+                    "Patient.deleteById failed | SQLState=" + ex.getSQLState()
+                            + " | Code=" + ex.getErrorCode()
+                            + " | Msg=" + ex.getMessage(),
+                    ex
+            );
         }
 
         // optionnel : supprimer entite

@@ -2,6 +2,9 @@
 
 package ma.dentalTech.repository.common;
 
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
+
 import java.sql.SQLException;
 import java.util.List;
 
@@ -13,9 +16,9 @@ public interface CrudRepository<T, ID> {
 
     T findById(ID id);
 
-    void create(T newElement) throws SQLException;
+    T create(T newElement) throws SQLException;
 
-    void update(T newValuesElement);
+    T update(T newValuesElement);
 
     void delete(T patient);
 

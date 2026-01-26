@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.users.Medecin;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.repository.common.RowMappers;
@@ -117,7 +119,7 @@ public class MedecinRepositoryImpl implements MedecinRepository {
     // -------------------- CREATE --------------------
 
     @Override
-    public void create(Medecin m) {
+    public Medecin create(Medecin m) {
         if (m == null) throw new IllegalArgumentException("Medecin is null");
 
         Connection conn = null;
@@ -203,12 +205,13 @@ public class MedecinRepositoryImpl implements MedecinRepository {
                 try { conn.setAutoCommit(oldAutoCommit); } catch (SQLException ignored) {}
             }
         }
+        return null;
     }
 
     // -------------------- UPDATE --------------------
 
     @Override
-    public void update(Medecin m) {
+    public Medecin update(Medecin m) {
         if (m == null || m.getIdUser() == null) throw new IllegalArgumentException("Medecin.idUser is null");
 
         Connection conn = null;
@@ -298,6 +301,7 @@ public class MedecinRepositoryImpl implements MedecinRepository {
                 try { conn.setAutoCommit(oldAutoCommit); } catch (SQLException ignored) {}
             }
         }
+        return null;
     }
 
     // -------------------- DELETE --------------------

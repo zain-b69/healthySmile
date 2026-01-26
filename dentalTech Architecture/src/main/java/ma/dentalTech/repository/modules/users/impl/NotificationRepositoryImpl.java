@@ -2,6 +2,8 @@ package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.base.BaseEntity;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.enums.TitreNotification;
 import ma.dentalTech.entities.enums.TypeNotification;
 import ma.dentalTech.entities.users.Notification;
@@ -73,8 +75,8 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     }
 
     @Override
-    public void create(Notification n) {
-        if (n == null) return;
+    public Notification create(Notification n) {
+        if (n == null) return null;
 
         Long userId = extractUtilisateurId(n.getUtilisateur());
         if (userId == null) throw new IllegalArgumentException("Notification.utilisateur.idUser is required");
@@ -118,11 +120,12 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.create failed", ex);
         }
+        return null;
     }
 
     @Override
-    public void update(Notification n) {
-        if (n == null) return;
+    public Notification update(Notification n) {
+        if (n == null) return null;
 
         if (n.getIdNotification() == null) {
             throw new IllegalArgumentException("Notification.idNotification (PK) is required for update");
@@ -162,6 +165,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Notification.update failed", ex);
         }
+        return null;
     }
 
     @Override

@@ -197,4 +197,46 @@ public class ConsultationServiceImpl implements ConsultationService {
         // (si tu veux un workflow strict, on le fera quand tu me donnes l'enum complet)
         return true;
     }
+
+    // Dans ConsultationServiceImpl.java, AJOUTER cette méthode :
+
+    @Override
+    public Consultation creerConsultationManuelle(Long idDm, Long idMedecin,
+                                                  LocalDate date, String observations) {
+
+        // Validation
+        if (idDm == null) throw new IllegalArgumentException("Dossier médical requis");
+        if (idMedecin == null) throw new IllegalArgumentException("Médecin requis");
+        if (date == null) throw new IllegalArgumentException("Date requise");
+
+        // Vérifier si le dossier médical existe (optionnel)
+        // Vous pourriez avoir besoin d'un service DossierMedicalService
+
+        Consultation c = new Consultation();
+        c.setIdConsultation(null);
+        c.setIdDm(idDm);
+        c.setIdMedecin(idMedecin);
+        c.setDate(date);
+        c.setStatut(StatutConsultation.PLANIFIEE);
+        c.setObservationMedecin(observations);
+        c.setIdRdv(null); // IMPORTANT : pas de RDV associé
+
+        return consultationRepo.save(c);
+    }
+    @Override
+    public boolean deleteById(Long idConsultation) {
+        if (idConsultation == null) throw new IllegalArgumentException("idConsultation requis");
+
+        // Récupérer la consultation pour vérifier son statut
+        Consultation c = getById(idConsultation);
+
+        // Règle métier : on ne peut pas supprimer une consultation terminée sans confirmation spéciale
+        // (optionnel, ajuste selon tes besoins)
+        if (isCloturee(c.getStatut())) {
+            // Tu peux lancer une exception ou demander confirmation dans l'UI
+            // Pour l'instant, on permet la suppression
+        }
+
+        return consultationRepo.deleteById(idConsultation);
+    }
 }

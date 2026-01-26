@@ -12,6 +12,7 @@ import ma.dentalTech.service.modules.auth.dto.AuthResult;
 import ma.dentalTech.service.modules.auth.dto.UserPrincipal;
 
 import java.util.Optional;
+import java.lang.Throwable;
 
 public class AuthServiceImpl implements AuthService {
 
@@ -64,8 +65,16 @@ public class AuthServiceImpl implements AuthService {
         } catch (IllegalArgumentException e) {
             return AuthResult.fail("INVALID_INPUT: " + e.getMessage());
         } catch (Exception e) {
-            return AuthResult.fail("AUTH_ERROR: " + e.getMessage());
+            e.printStackTrace(); // pour voir la vraie erreur en console
+
+            Throwable root = e;
+            while (root.getCause() != null) root = root.getCause();
+
+            return AuthResult.fail(
+                    "AUTH_ERROR: " + root.getClass().getSimpleName() + " - " + root.getMessage()
+            );
         }
+
     }
 
     @Override

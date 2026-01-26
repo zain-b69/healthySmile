@@ -262,4 +262,10 @@ public class MedicamentServiceImpl implements MedicamentService {
     private String safe(String s) {
         return s == null ? "" : s;
     }
+
+    @Override
+    public void deleteById(Long idMct) {
+        if (idMct == null) return;
+        medicamentRepo.deleteById(idMct);
+    }
 }

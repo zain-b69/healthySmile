@@ -26,4 +26,8 @@ public interface OrdonnanceService {
     void validateOrThrow(Ordonnance ordonnance);
     void validateExistingOrThrow(Long idOrd);
     void validatePrescriptionsOrThrow(List<Prescription> prescriptions);
+
+    Ordonnance update(Ordonnance ordonnance);
+
+    List<Ordonnance> findAll();
 }

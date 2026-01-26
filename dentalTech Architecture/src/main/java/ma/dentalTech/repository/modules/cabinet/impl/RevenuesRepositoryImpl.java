@@ -3,6 +3,8 @@ package ma.dentalTech.repository.modules.cabinet.impl;
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.cabinet.CabinetMedical;
 import ma.dentalTech.entities.cabinet.Revenues;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.cabinet.api.RevenuesRepository;
 
@@ -96,7 +98,7 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
 
 
     @Override
-    public void create(Revenues revenue) {
+    public Revenues create(Revenues revenue) {
         String sql = """
             INSERT INTO Revenu(titre, description, montant, date_revenu, id_cabinet)
             VALUES(?,?,?,?,?)
@@ -117,10 +119,11 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
                 if (keys.next()) revenue.setIdRevenu(keys.getLong(1));
             }
         } catch (SQLException e) { throw new RuntimeException(e); }
+        return null;
     }
 
     @Override
-    public void update(Revenues revenue) {
+    public Revenues update(Revenues revenue) {
         String sql = """
             UPDATE Revenu SET
               titre=?, description=?, montant=?, date_revenu=?, id_cabinet=?
@@ -140,6 +143,7 @@ public class RevenuesRepositoryImpl implements RevenuesRepository {
             ps.executeUpdate();
 
         } catch (SQLException e) { throw new RuntimeException(e); }
+        return null;
     }
 
     @Override

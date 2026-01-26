@@ -73,6 +73,18 @@ public class SituationFinanciereServiceImpl implements SituationFinanciereServic
     public void appliquerPromo(Long idSf, boolean enPromo) {
         SituationFinanciere sf = requireSf(idSf);
 
+        if (enPromo && !sf.getEnPromo()) {
+            // Appliquer la réduction de 25%
+            double ancienTotal = sf.getTotaleDesActes();
+            double nouveauTotal = ancienTotal * 0.75; // -25%
+            sf.setTotaleDesActes(nouveauTotal);
+        } else if (!enPromo && sf.getEnPromo()) {
+            // Retirer la promotion : revenir au prix original
+            double totalAvecPromo = sf.getTotaleDesActes();
+            double totalOriginal = totalAvecPromo / 0.75; // Annuler la réduction
+            sf.setTotaleDesActes(totalOriginal);
+        }
+
         sf.setEnPromo(enPromo);
         // on garde les montants, on met juste le statut cohérent avec le flag promo
         sf.setStatut(calcStatut(sf));

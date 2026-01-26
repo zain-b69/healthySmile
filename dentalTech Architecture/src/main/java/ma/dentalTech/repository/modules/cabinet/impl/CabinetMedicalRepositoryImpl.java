@@ -1,14 +1,13 @@
 package ma.dentalTech.repository.modules.cabinet.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.agenda.RDV;
 import ma.dentalTech.entities.cabinet.CabinetMedical;
-import ma.dentalTech.entities.enums.CategorieStatistique;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.users.Staff;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.cabinet.api.CabinetMedicalRepository;
-import ma.dentalTech.entities.cabinet.Charges;
-import ma.dentalTech.entities.cabinet.Revenues;
-import ma.dentalTech.entities.cabinet.Statistiques;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -55,7 +54,7 @@ public class CabinetMedicalRepositoryImpl implements CabinetMedicalRepository {
     }
 
     @Override
-    public void create(CabinetMedical cabinet) {
+    public CabinetMedical create(CabinetMedical cabinet) {
         String sql = """
             INSERT INTO cabinet_medicale
             (id_user, nom, email, logo, adresse, cin, tel1, tel2, site_web,
@@ -83,10 +82,11 @@ public class CabinetMedicalRepositoryImpl implements CabinetMedicalRepository {
                 if (keys.next()) cabinet.setIdCabinet(keys.getLong(1));
             }
         } catch (SQLException e) { throw new RuntimeException(e); }
+        return null;
     }
 
     @Override
-    public void update(CabinetMedical cabinet) {
+    public CabinetMedical update(CabinetMedical cabinet) {
         String sql = """
             UPDATE cabinet_medicale SET
               nom=?, email=?, logo=?, adresse=?, cin=?, tel1=?, tel2=?,
@@ -111,6 +111,7 @@ public class CabinetMedicalRepositoryImpl implements CabinetMedicalRepository {
 
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException(e); }
+        return null;
     }
 
     @Override

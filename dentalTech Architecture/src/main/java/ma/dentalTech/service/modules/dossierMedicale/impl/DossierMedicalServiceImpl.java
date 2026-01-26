@@ -123,4 +123,20 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
     public List<DossierMedical> listAll() {
         return dossierMedicalRepo.findAll();
     }
+
+    // NOUVELLE MÉTHODE
+    @Override
+    public boolean deleteById(Long idDm) {
+        if (idDm == null) {
+            throw new IllegalArgumentException("idDm requis");
+        }
+
+        // Vérifier si le dossier existe
+        if (!dossierMedicalRepo.findById(idDm).isPresent()) {
+            throw new RuntimeException("Dossier médical #" + idDm + " introuvable");
+        }
+
+        // Supprimer le dossier
+        return dossierMedicalRepo.deleteById(idDm);
+    }
 }
