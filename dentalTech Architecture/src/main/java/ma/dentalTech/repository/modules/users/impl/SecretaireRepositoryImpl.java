@@ -2,6 +2,8 @@ package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.cabinet.CabinetMedical;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.enums.RoleType;
 import ma.dentalTech.entities.users.Secretaire;
 import ma.dentalTech.repository.common.RowMappers;
@@ -103,7 +105,7 @@ public class SecretaireRepositoryImpl implements SecretaireRepository {
     // ===================== CREATE =====================
 
     @Override
-    public void create(Secretaire s) {
+    public Secretaire create(Secretaire s) {
         if (s == null) throw new IllegalArgumentException("Secretaire is null");
 
         Connection c = null;
@@ -139,12 +141,13 @@ public class SecretaireRepositoryImpl implements SecretaireRepository {
         } finally {
             resetAutoCommitQuietly(c, oldAutoCommit);
         }
+        return null;
     }
 
     // ===================== UPDATE =====================
 
     @Override
-    public void update(Secretaire s) {
+    public Secretaire update(Secretaire s) {
         if (s == null) throw new IllegalArgumentException("Secretaire is null");
         if (s.getIdUser() == null) throw new IllegalArgumentException("Secretaire.idUser is null");
 
@@ -218,6 +221,7 @@ public class SecretaireRepositoryImpl implements SecretaireRepository {
         } finally {
             resetAutoCommitQuietly(c, oldAutoCommit);
         }
+        return null;
     }
 
     // ===================== DELETE =====================

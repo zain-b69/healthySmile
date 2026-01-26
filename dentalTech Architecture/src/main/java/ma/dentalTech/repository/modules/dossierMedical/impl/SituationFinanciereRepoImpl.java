@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.dossierMedical.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
 import ma.dentalTech.entities.enums.StatutSituationFinanciere;
 import ma.dentalTech.repository.common.RowMappers;
@@ -70,7 +72,7 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
     }
 
     @Override
-    public void create(SituationFinanciere sf) {
+    public SituationFinanciere create(SituationFinanciere sf) {
         if (sf == null) throw new IllegalArgumentException("SituationFinanciere is null");
 
         String sql = """
@@ -106,6 +108,7 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
         } catch (SQLException ex) {
             throw new RuntimeException("SituationFinanciere.create failed", ex);
         }
+        return null;
     }
 
     public Long createAndReturnId(SituationFinanciere sf) {
@@ -114,7 +117,7 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
     }
 
     @Override
-    public void update(SituationFinanciere sf) {
+    public SituationFinanciere update(SituationFinanciere sf) {
         if (sf == null || sf.getIdSf() == null)
             throw new IllegalArgumentException("SituationFinanciere.idSf is null");
 
@@ -149,6 +152,7 @@ public class SituationFinanciereRepoImpl implements SituationFinanciereRepo {
         } catch (SQLException ex) {
             throw new RuntimeException("SituationFinanciere.update failed", ex);
         }
+        return null;
     }
 
     @Override

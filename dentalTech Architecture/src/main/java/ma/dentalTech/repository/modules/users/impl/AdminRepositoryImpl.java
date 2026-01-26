@@ -2,6 +2,8 @@ package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.cabinet.CabinetMedical;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.enums.RoleType;
 import ma.dentalTech.entities.enums.Sexe;
 import ma.dentalTech.entities.users.Admin;
@@ -61,7 +63,7 @@ public class AdminRepositoryImpl implements AdminRepository {
     }
 
     @Override
-    public void create(Admin a) {
+    public Admin create(Admin a) {
         try {
             // 1) entite (audit)
             Long idEntite = insertEntiteIfNeeded(a);
@@ -127,10 +129,11 @@ public class AdminRepositoryImpl implements AdminRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("create admin failed", ex);
         }
+        return null;
     }
 
     @Override
-    public void update(Admin a) {
+    public Admin update(Admin a) {
         if (a.getIdUser() == null) throw new IllegalArgumentException("Admin.idUser is null");
 
         try {
@@ -195,6 +198,7 @@ public class AdminRepositoryImpl implements AdminRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("update admin failed", ex);
         }
+        return null;
     }
 
     @Override

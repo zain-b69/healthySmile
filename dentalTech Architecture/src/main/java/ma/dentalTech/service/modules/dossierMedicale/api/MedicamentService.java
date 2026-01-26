@@ -46,4 +46,6 @@ public interface MedicamentService {
     // ---- Utilitaires ----
     Medicament getById(Long idMct);
     List<Medicament> getAll();
+
+    void deleteById(Long idMct);
 }

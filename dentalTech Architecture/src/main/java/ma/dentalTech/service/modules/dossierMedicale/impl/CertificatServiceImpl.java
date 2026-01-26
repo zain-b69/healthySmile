@@ -143,4 +143,14 @@ public class CertificatServiceImpl implements CertificatService {
         String n = note.trim();
         return n.isBlank() ? null : n;
     }
+
+    @Override
+    public boolean deleteById(Long idCertif) {
+        if (idCertif == null) throw new IllegalArgumentException("idCertif requis");
+
+        // Optionnel : tu peux ajouter des règles métier ici
+        // Ex: vérifier si le certificat peut être supprimé
+
+        return certificatRepo.deleteById(idCertif);
+    }
 }

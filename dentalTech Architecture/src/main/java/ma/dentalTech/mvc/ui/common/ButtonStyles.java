@@ -17,6 +17,12 @@ public final class ButtonStyles {
         installHover(b, Theme.PRIMARY, Theme.PRIMARY_HOVER);
     }
 
+    /* ================= SECONDARY ================= */
+    public static void secondary(JButton b) {
+        prepare(b);
+        applyFilled(b, Theme.SECONDARY, Theme.SECONDARY_HOVER, Theme.TEXT_DARK);
+    }
+
     public static void danger(JButton b) {
         prepare(b);
         b.setForeground(Color.WHITE);
@@ -39,6 +45,13 @@ public final class ButtonStyles {
             b.setContentAreaFilled(true);
             b.setOpaque(true);
         }
+    }
+
+    /* ================= STYLE APPLIER ================= */
+    private static void applyFilled(JButton b, Color normal, Color hover, Color text) {
+        b.setBackground(normal);
+        b.setForeground(text);
+        installHover(b, normal, hover);
     }
 
     private static void installHover(JButton b, Color normal, Color hover) {

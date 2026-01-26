@@ -24,4 +24,6 @@ public interface InterventionMedecinService {
 
     // ---- Utilitaires ----
     InterventionMedecin getById(Long idIm);
+
+    boolean deleteById(Long idIm);
 }

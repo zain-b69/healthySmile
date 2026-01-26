@@ -2,6 +2,8 @@ package ma.dentalTech.repository.modules.cabinet.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.cabinet.Statistiques;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.enums.CategorieStatistique;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.cabinet.api.StatistiquesRepository;
@@ -79,7 +81,7 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
     }
 
     @Override
-    public void create(Statistiques s) {
+    public Statistiques create(Statistiques s) {
         String sql = """
         INSERT INTO statistiques(
             id_cabinet, periode, date_debut, date_fin,
@@ -112,10 +114,11 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     @Override
-    public void update(Statistiques s) {
+    public Statistiques update(Statistiques s) {
         String sql = """
             UPDATE statistiques SET
                 id_cabinet=?, periode=?,
@@ -147,6 +150,7 @@ public class StatistiquesRepositoryImpl implements StatistiquesRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     @Override

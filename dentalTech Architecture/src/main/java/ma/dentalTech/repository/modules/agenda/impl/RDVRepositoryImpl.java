@@ -2,6 +2,8 @@ package ma.dentalTech.repository.modules.agenda.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.agenda.RDV;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.agenda.api.RDVRepository;
 
@@ -66,7 +68,7 @@ public class RDVRepositoryImpl implements RDVRepository {
     }
 
     @Override
-    public void create(RDV rdv) {
+    public RDV create(RDV rdv) {
         String sql = """
             INSERT INTO rdv (
                 id_entite,
@@ -106,10 +108,11 @@ public class RDVRepositoryImpl implements RDVRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     @Override
-    public void update(RDV rdv) {
+    public RDV update(RDV rdv) {
         String sql = """
             UPDATE rdv SET
                 id_entite = ?,
@@ -145,6 +148,7 @@ public class RDVRepositoryImpl implements RDVRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return null;
     }
 
     @Override

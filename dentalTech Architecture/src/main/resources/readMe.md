@@ -1,13 +1,17 @@
-# 🦷 DentalTech 
+# 🦷 HealthySmile
 
 ---
 ### Application de Gestion d’un Cabinet Dentaire
-
 ---
 
-> Projet de Module (JAVA-Avancé) – EMSI Rabat  
-> Réalisé par un groupe de 4 ( à 5) étudiants
-> 
+> Projet de Programmation Avancée JAVA – EMSI Rabat
+>
+> Réalisé par :
+> - **Belkhou Zainab**
+> - **El Kadouri Safaa**
+> - **El Moqadem Oussama**
+> - **El Hanchi El Amrani Ismail**
+>
 > Encadré par : **Pr. Omar EL MIDAOUI**
 
 ---
@@ -17,48 +21,46 @@
 2. [Objectifs du projet](#-objectifs-du-projet)
 3. [Technologies utilisées](#-technologies-utilisées)
 4. [Architecture du projet](#-architecture-du-projet)
-5. [Organisation du travail (Scrum / Modules)](#-organisation-du-travail)
-6. [Fonctionnalités principales](#-fonctionnalités-principales)
-7. [Base de données](#-base-de-données)
-8. [Structure du code source](#-structure-du-code-source)
-9. [Charte graphique & UI/UX](#-charte-graphique--uiux)
-10. [Procédure d’installation et d’exécution](#-procédure-dinstallation-et-dexécution)
-11. [Scénario de démonstration](#-scénario-de-démo)
-12. [Conclusion et perspectives](#-conclusion-et-perspectives)
+5. [Fonctionnalités principales](#-fonctionnalités-principales)
+6. [Base de données](#-base-de-données)
+7. [Structure du code source](#-structure-du-code-source)
+8. [Charte graphique & UI/UX](#-charte-graphique--uiux)
+9. [Procédure d’installation et d’exécution](#-procédure-dinstallation-et-dexécution)
+10. [Scénario de démonstration](#-scénario-de-démonstration)
+11. [Conclusion et perspectives](#-conclusion-et-perspectives)
 
 ---
 
 ## 🩺 Contexte du projet
-La digitalisation des cabinets médicaux devient une nécessité pour améliorer la gestion des dossiers patients, la planification des rendez-vous et le suivi des interventions.  
-Dans ce contexte, **DentalTech** vise à fournir une **application de bureau (Java Swing)** permettant au médecin dentiste et à sa secrétaire de gérer efficacement les aspects administratifs, médicaux et financiers du cabinet.
+La gestion manuelle des cabinets dentaires entraîne souvent des problèmes d’organisation, de planification des rendez-vous et de suivi des dossiers médicaux.  
+Dans ce contexte, **HealthySmile** vise à proposer une **application bureau développée en Java Swing** permettant d’assurer une gestion efficace des aspects médicaux, administratifs et financiers d’un cabinet dentaire.
 
 ---
 
 ## 🎯 Objectifs du projet
-- **Automatiser** la gestion des patients et de leurs dossiers médicaux.  
-- **Optimiser** la planification des rendez-vous et la facturation.  
-- **Assurer** un suivi complet du parcours médical du patient (consultations, ordonnances, certificats).  
-- **Offrir** une interface ergonomique, intuitive et moderne via Swing.  
-- **Appliquer** les principes SOLID et la conception en couches (MVC + DAO + Services).  
+- Automatiser la gestion des patients et des dossiers médicaux
+- Faciliter la planification des rendez-vous
+- Assurer le suivi des consultations, ordonnances et certificats
+- Gérer la facturation et les paiements
+- Proposer une interface ergonomique et intuitive
+- Appliquer les principes de la programmation orientée objet
 
 ---
 
 ## 🧰 Technologies utilisées
 | Catégorie | Technologies |
-|------------|---------------|
-| Langage principal | Java SE 23 |
-| Framework graphique | Java Swing |
-| Base de données | MySQL 8.0 |
-| ORM / DAO | JDBC |
-| Outils de build | Maven |
-| Librairies | Lombok, JFreeChart, iTextPDF |
-| IDE | IntelliJ IDEA Ultimate 2025 |
-| Méthodologie | Agile (Scrum) |
+|---------|-------------|
+| Langage | Java |
+| Interface graphique | Java Swing |
+| Base de données | MySQL |
+| Accès aux données | JDBC |
+| IDE | IntelliJ IDEA |
+| Modélisation | UML (StarUML) |
 
 ---
 
 ## 🏗️ Architecture du projet
-L’application respecte une architecture **multi-couche MVC** :
+L’application est basée sur une **architecture en couches**, assurant une bonne séparation des responsabilités :
 
 ```
 DentalTech/
@@ -79,43 +81,42 @@ DentalTech/
 └─ common/          → Exceptions, utilitaires, validateurs
 ```
 
-Chaque couche communique uniquement avec la couche inférieure (respect du principe **DIP – Dependency Inversion Principle**).
+Cette architecture facilite la maintenance, l’évolution et la lisibilité du code.
 
 ---
 
+## ⚙️ Fonctionnalités principales
 
-##  Fonctionnalités principales
-###  Espace Médecin :
-- Accès complet au dossier patient
-- Ajout et consultation des interventions
-- Édition d’ordonnances et certificats
-- ...
+### 👨‍⚕️ Espace Médecin
+- Consultation des dossiers médicaux
+- Ajout de consultations et traitements
+- Gestion des ordonnances et certificats
+- Accès aux factures liées aux actes médicaux
 
-###  Espace Secrétaire :
-- Gestion des rendez-vous
-- Gestion des paiements / factures
-- Consultation du planning global
-- ...
+### 👩‍💼 Espace Secrétaire
+- Gestion des patients
+- Planification et gestion des rendez-vous
+- Gestion de la caisse et des paiements
+- Consultation de l’agenda du médecin
 
-###  Fonctions transverses :
-- Authentification / rôles
-- Statistiques (patients / revenus / interventions)
-- Export PDF des rapports
-- Sauvegarde et restauration de la base
-- ...
+### 🔐 Fonctions transversales
+- Authentification et gestion des rôles
+- Statistiques (patients, rendez-vous, revenus)
+- Recherche et filtrage des données
 
 ---
 
-## Base de données
-- **Script SQL** : `schema.sql` → création du schéma complet.  
-- **Jeu de données** : `seed.sql` → initialisation (patients, rendez-vous, factures ...etc).  
-- **Connexion JDBC** : paramètres stockés dans `db.properties`.
+## 🗄️ Base de données
+- Base relationnelle **MySQL**
+- Tables principales : `patient`, `rendez_vous`, `dossier_medical`, `consultation`, `facture`, `utilisateur`
+- Connexion assurée via **JDBC**
 
-**Exemple (db.properties)** :
+**Exemple de configuration (`db.properties`)** :
 ```properties
-db.url=jdbc:mysql://localhost:3306/dentalTechDB
+db.url=jdbc:mysql://localhost:3306/healthy_smile
 db.user=root
-db.password=rootroot
+db.password=
+
 ```
 
 ---
@@ -133,21 +134,22 @@ Chaque package contient :
 
 ## 🎨 Charte graphique & UI/UX
 - **Palette de couleurs :**
-  - Bleu clair (#4DB6AC)
-  - Blanc (#FFFFFF)
-  - Gris clair (#E0E0E0)
-  - Vert validation (#81C784)
-  - Rouge alerte (#E57373)
+    - Bleu foncé (menu latéral et navigation)
+    - Bleu vif (boutons d’action)
+    - Blanc (fond principal)
+    - Gris clair (tableaux, séparations et zones secondaires)
+    - Rouge (actions critiques : déconnexion, quitter)
 
-- **Polices :**
-  - `Poppins` pour les titres
-  - `Roboto` pour les textes
+- **Typographie :**
+    - Police sans empattement standard (Java Swing – Look & Feel système)
+    - Texte clair et lisible, adapté aux tableaux et formulaires
 
 - **Règles UI :**
-  - Fenêtres centrées
-  - Champs bien espacés
-  - Icônes cohérentes (dossier *static/icones/*)
-  - Respect de la hiérarchie visuelle
+    - Menu latéral fixe pour une navigation rapide
+    - Boutons d’action clairement identifiés
+    - Espacement cohérent des champs et composants
+    - Tableaux structurés pour une meilleure lisibilité
+    - Interface épurée respectant la hiérarchie visuelle
 
 ---
 
@@ -155,12 +157,11 @@ Chaque package contient :
 
 1. **Cloner le projet :**
    ```bash
-   git clone https://github.com/nom-utilisateur/DentalTech.git
-   cd DentalTech
+   git clone https://github.com/zain-b69/healthySmile
    ```
 
 2. **Configurer la base de données :**
-   - Importer le fichier `schema.sql` dans MySQL
+   - Importer le fichier `Dump20260125.sql` dans MySQL
    - Modifier `src/main/resources/db.properties`
 
 3. **Compiler et exécuter :**
@@ -171,7 +172,7 @@ Chaque package contient :
 
 4. **Connexion par défaut (test) :**
    ```
-   Utilisateur : admin@DentalTech.ma
+   Utilisateur : admin
    Mot de passe : admin123
    ```
 
@@ -190,12 +191,12 @@ Chaque package contient :
 ---
 
 ## 👨‍💻 Équipe projet
-| Étudiant | Rôle | Email |
-|-----------|------|------|
-| Étudiant 1 | ...  | ... |
-| Étudiant 2 | ...  | ... |
-| Étudiant 3 | ...  | ... |
-| Étudiant 4 | ...  | ... |
+| Étudiant | Rôle    | Email                   |
+|-----------|---------|-------------------------|
+| Étudiant 1 | Zainab  | zainabbelkhou@gmail.com |
+| Étudiant 2 | Safaa   | ...                     |
+| Étudiant 3 | Ismail  | ...                     |
+| Étudiant 4 | Oussama | ...                     |
 
 ---
 

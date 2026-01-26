@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.enums.RoleType;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.repository.common.RowMappers;
@@ -66,8 +68,8 @@ public class RoleRepositoryImpl implements RoleRepository {
     }
 
     @Override
-    public void create(Role r) {
-        if (r == null) return;
+    public Role create(Role r) {
+        if (r == null) return null;
 
         try {
             Long idEntite = insertEntiteIfNeeded(r);
@@ -94,11 +96,12 @@ public class RoleRepositoryImpl implements RoleRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Role.create failed", ex);
         }
+        return null;
     }
 
     @Override
-    public void update(Role r) {
-        if (r == null) return;
+    public Role update(Role r) {
+        if (r == null) return null;
         if (r.getIdRole() == null) throw new IllegalArgumentException("Role.idRole is null");
 
         String sql = """
@@ -120,6 +123,7 @@ public class RoleRepositoryImpl implements RoleRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("Role.update failed", ex);
         }
+        return null;
     }
 
     @Override

@@ -30,4 +30,6 @@ public interface CertificatService {
 
     // ---- Utilitaires ----
     Certificat getById(Long idCertif);
+
+    boolean deleteById(Long idCertif);
 }

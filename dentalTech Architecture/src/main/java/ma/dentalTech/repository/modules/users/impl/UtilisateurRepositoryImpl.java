@@ -1,6 +1,8 @@
 package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.entities.users.Utilisateur;
 import ma.dentalTech.repository.common.RowMappers;
@@ -64,7 +66,7 @@ public class UtilisateurRepositoryImpl implements UtilisateurRepository {
     }
 
     @Override
-    public void create(Utilisateur u) throws SQLException {
+    public Utilisateur create(Utilisateur u) throws SQLException {
         // 1) créer entite si tu veux audit obligatoire
         Long idEntite = insertEntiteIfNeeded(u);
 
@@ -103,10 +105,11 @@ public class UtilisateurRepositoryImpl implements UtilisateurRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("create utilisateur failed", ex);
         }
+        return null;
     }
 
     @Override
-    public void update(Utilisateur u) {
+    public Utilisateur update(Utilisateur u) {
         if (u.getIdUser() == null) throw new IllegalArgumentException("Utilisateur.idUser is null");
 
         String sql = """
@@ -150,6 +153,7 @@ public class UtilisateurRepositoryImpl implements UtilisateurRepository {
         } catch (SQLException ex) {
             throw new RuntimeException("update utilisateur failed", ex);
         }
+        return null;
     }
 
     @Override

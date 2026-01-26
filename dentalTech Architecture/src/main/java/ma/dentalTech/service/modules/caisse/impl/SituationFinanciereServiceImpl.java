@@ -29,7 +29,7 @@ public class SituationFinanciereServiceImpl implements SituationFinanciereServic
     }
 
     @Override
-    public SituationFinanciere getOuCreerPourDossier(long idDm, boolean enPromo, String creePar) {
+    public SituationFinanciere getOuCreerPourDossier(long idDm, boolean enPromo, String creePar) throws SQLException {
         SituationFinanciere existing = consulterParDossier(idDm);
         if (existing != null) return existing;
 

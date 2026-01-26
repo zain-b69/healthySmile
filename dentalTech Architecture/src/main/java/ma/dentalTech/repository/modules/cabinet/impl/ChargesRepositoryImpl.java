@@ -3,6 +3,8 @@ package ma.dentalTech.repository.modules.cabinet.impl;
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.cabinet.CabinetMedical;
 import ma.dentalTech.entities.cabinet.Charges;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.repository.common.RowMappers;
 import ma.dentalTech.repository.modules.cabinet.api.ChargesRepository;
 
@@ -92,7 +94,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
     }
 
     @Override
-    public void create(Charges charge) {
+    public Charges create(Charges charge) {
         String sql = """
             INSERT INTO charge(titre, description, montant, date_charge, id_cabinet)
             VALUES(?,?,?,?,?)
@@ -112,10 +114,11 @@ public class ChargesRepositoryImpl implements ChargesRepository {
                 if (keys.next()) charge.setIdCharge(keys.getLong(1));
             }
         } catch (SQLException e) { throw new RuntimeException(e); }
+        return null;
     }
 
     @Override
-    public void update(Charges charge) {
+    public Charges update(Charges charge) {
         String sql = """
             UPDATE charge SET
               titre=?, description=?, montant=?, date_charge=?, id_cabinet=?
@@ -133,6 +136,7 @@ public class ChargesRepositoryImpl implements ChargesRepository {
 
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException(e); }
+        return null;
     }
 
     @Override

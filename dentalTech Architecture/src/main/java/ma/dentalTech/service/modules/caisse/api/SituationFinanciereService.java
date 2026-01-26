@@ -2,6 +2,8 @@ package ma.dentalTech.service.modules.caisse.api;
 
 import ma.dentalTech.entities.dossierMedical.SituationFinanciere;
 
+import java.sql.SQLException;
+
 /**
  * Cas d'usage : Gérer les situations financières.
  *
@@ -12,7 +14,7 @@ public interface SituationFinanciereService {
 
     SituationFinanciere consulterParDossier(long idDm);
 
-    SituationFinanciere getOuCreerPourDossier(long idDm, boolean enPromo, String creePar);
+    SituationFinanciere getOuCreerPourDossier(long idDm, boolean enPromo, String creePar) throws SQLException;
 
     /**
      * Recalcule totale_des_actes (via interventions) et totale_paye (via factures), puis met à jour credit + statut.

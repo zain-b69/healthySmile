@@ -5,6 +5,7 @@ import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.dossierMedical.PrescriptionMedicament;
 import ma.dentalTech.mvc.dto.PrescriptionSummaryDTO;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public interface PrescriptionService {
@@ -42,4 +43,8 @@ public interface PrescriptionService {
     String normaliserFrequence(Prescription p);
     List<Long> detecterDoublonsMeds(Prescription p);
     Prescription fusionnerPrescriptions(Prescription a, Prescription b);
+
+    Prescription update(Prescription prescription);
+
+    Prescription addPrescriptionToOrdonnance(Long idOrdonnance, Prescription p) throws SQLException;
 }

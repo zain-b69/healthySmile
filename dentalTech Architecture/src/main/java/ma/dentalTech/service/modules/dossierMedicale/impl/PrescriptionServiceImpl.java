@@ -8,6 +8,7 @@ import ma.dentalTech.repository.modules.dossierMedical.api.OrdonnanceRepo;
 import ma.dentalTech.repository.modules.dossierMedical.api.PrescriptionRepo;
 import ma.dentalTech.service.modules.dossierMedicale.api.PrescriptionService;
 
+import java.sql.SQLException;
 import java.util.*;
 
 public class PrescriptionServiceImpl implements PrescriptionService {
@@ -418,4 +419,40 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }
+
+    @Override
+    public Prescription update(Prescription prescription) {
+        if (prescription == null) throw new IllegalArgumentException("Prescription ne peut pas être null");
+        if (prescription.getIdPr() == null) throw new IllegalArgumentException("idPr est obligatoire pour update");
+
+        validateOrThrow(prescription);
+        validateExistingOrThrow(prescription.getIdPr());
+
+        return prescriptionRepo.update(prescription);
+    }
+
+    @Override
+    public Prescription addPrescriptionToOrdonnance(Long idOrdonnance, Prescription p) throws SQLException {
+        if (idOrdonnance == null) throw new IllegalArgumentException("idOrdonnance ne peut pas être null");
+        if (p == null) throw new IllegalArgumentException("Prescription ne peut pas être null");
+
+        // Validation de l'ordonnance existante
+        validateExistingOrdonnanceOrThrow(idOrdonnance);
+
+        // Validation de la prescription
+        validateForOrdonnanceOrThrow(idOrdonnance, p);
+
+        // S'assurer que l'ID de l'ordonnance est bien défini
+        p.setIdOrdonnance(idOrdonnance);
+
+        // Création dans la base de données
+        return prescriptionRepo.create(p);
+    }
+
+    private void validateExistingOrdonnanceOrThrow(Long ordonnanceId) {
+        if (!ordonnanceRepo.existsById(ordonnanceId)) {
+            throw new IllegalArgumentException("Ordonnance introuvable: id=" + ordonnanceId);
+        }
+    }
+
 }

@@ -137,4 +137,15 @@ public class InterventionMedecinServiceImpl implements InterventionMedecinServic
             throw new IllegalArgumentException("numDent invalide (1..32)");
         }
     }
+
+
+    @Override
+    public boolean deleteById(Long idIm) {
+        if (idIm == null) throw new IllegalArgumentException("idIm requis");
+
+        // Optionnel : ajouter des règles métier si besoin
+        // Ex: vérifier si l'intervention est facturée, etc.
+
+        return interventionRepo.deleteById(idIm);
+    }
 }

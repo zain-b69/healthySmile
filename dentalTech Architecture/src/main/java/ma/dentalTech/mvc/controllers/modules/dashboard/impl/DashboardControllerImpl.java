@@ -17,9 +17,12 @@ import ma.dentalTech.mvc.ui.modules.caisse.CaissePanel;
 import ma.dentalTech.mvc.ui.modules.catalogue.CataloguePanel;
 import ma.dentalTech.mvc.ui.modules.dashboard.*;
 import ma.dentalTech.mvc.controllers.modules.dossierMedical.api.DossierMedicalController;
+import ma.dentalTech.mvc.ui.modules.dossierMedical.CertificationsPanel;
 import ma.dentalTech.mvc.ui.modules.dossierMedical.DossierMedicalPanel;
 import ma.dentalTech.mvc.controllers.modules.caisse.api.CaisseController;// adapte le package de ton panel
 
+import ma.dentalTech.mvc.ui.modules.dossierMedical.OrdonnancePanel;
+import ma.dentalTech.mvc.ui.modules.dossierMedical.SituationsFinancieresPanel;
 import ma.dentalTech.mvc.ui.modules.patient.PatientsListPanel;
 import ma.dentalTech.mvc.ui.modules.rdv.RendezVousPanel;
 import ma.dentalTech.mvc.ui.modules.statistiques.StatistiquesPanel;
@@ -117,10 +120,10 @@ public class DashboardControllerImpl implements DashboardController {
             // placeholders (tu implémenteras après)
             case RENDEZ_VOUS -> new RendezVousPanel(principal, rdvController, patientController, medecinRepository,workflowController);
             case AGENDA -> new AgendaPagePanel(principal,medecinRepository, agendaMensuelService, rdvRepository);
-            case DOSSIERS_MEDICAUX -> new DossierMedicalPanel(dossierMedicalController);
-            case ORDONNANCES -> placeholder("Ordonnances");
-            case CERTIFICATIONS -> placeholder("Certifications");
-            case SITUATIONS_FINANCIERES ->  placeholder("Situations Financieres");
+            case DOSSIERS_MEDICAUX -> new DossierMedicalPanel(dossierMedicalController, patientController);
+            case ORDONNANCES -> new OrdonnancePanel(dossierMedicalController);
+            case CERTIFICATIONS -> new CertificationsPanel(dossierMedicalController, patientController);
+            case SITUATIONS_FINANCIERES -> new SituationsFinancieresPanel(dossierMedicalController, patientController);
             case CATALOGUE -> new CataloguePanel(acteController,antecedentController);
             case CAISSE -> new CaissePanel(caisseController);
             case STATISTIQUES -> new StatistiquesPanel(statistiquesController);

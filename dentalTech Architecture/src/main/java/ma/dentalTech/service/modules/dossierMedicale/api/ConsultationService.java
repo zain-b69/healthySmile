@@ -29,4 +29,9 @@ public interface ConsultationService {
     // ---- Contrôle ----
     Consultation getByRdv(Long idRdv);
     Consultation getById(Long idConsultation);
+
+    Consultation creerConsultationManuelle(Long idDm, Long idMedecin,
+                                           LocalDate date, String observations);
+
+    boolean deleteById(Long idConsultation);
 }

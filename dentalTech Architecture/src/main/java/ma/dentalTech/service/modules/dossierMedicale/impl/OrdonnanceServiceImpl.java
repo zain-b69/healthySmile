@@ -291,4 +291,20 @@ public class OrdonnanceServiceImpl implements OrdonnanceService {
         return null;
     }
 
+    @Override
+    public Ordonnance update(Ordonnance ordonnance) {
+        if (ordonnance == null) throw new IllegalArgumentException("Ordonnance ne peut pas être null");
+        if (ordonnance.getIdOrd() == null) throw new IllegalArgumentException("idOrd est obligatoire pour update");
+
+        validateOrThrow(ordonnance);
+        validateExistingOrThrow(ordonnance.getIdOrd());
+
+        return ordonnanceRepo.update(ordonnance);
+    }
+
+    @Override
+    public List<Ordonnance> findAll() {
+        return ordonnanceRepo.findAll();
+    }
+
 }

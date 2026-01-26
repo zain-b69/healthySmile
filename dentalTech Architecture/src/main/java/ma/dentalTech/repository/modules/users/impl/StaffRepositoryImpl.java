@@ -2,6 +2,8 @@ package ma.dentalTech.repository.modules.users.impl;
 
 import ma.dentalTech.configuration.SessionFactory;
 import ma.dentalTech.entities.cabinet.CabinetMedical;
+import ma.dentalTech.entities.dossierMedical.Ordonnance;
+import ma.dentalTech.entities.dossierMedical.Prescription;
 import ma.dentalTech.entities.enums.RoleType;
 import ma.dentalTech.entities.users.Role;
 import ma.dentalTech.entities.users.Staff;
@@ -102,7 +104,7 @@ public class StaffRepositoryImpl implements StaffRepository {
     // ===================== CREATE =====================
 
     @Override
-    public void create(Staff s) {
+    public Staff create(Staff s) {
         if (s == null) throw new IllegalArgumentException("Staff is null");
 
         Connection c = null;
@@ -132,12 +134,13 @@ public class StaffRepositoryImpl implements StaffRepository {
         } finally {
             resetAutoCommitQuietly(c, oldAutoCommit);
         }
+        return null;
     }
 
     // ===================== UPDATE =====================
 
     @Override
-    public void update(Staff s) {
+    public Staff update(Staff s) {
         if (s == null) throw new IllegalArgumentException("Staff is null");
         if (s.getIdUser() == null) throw new IllegalArgumentException("Staff.idUser is null");
 
@@ -201,6 +204,7 @@ public class StaffRepositoryImpl implements StaffRepository {
         } finally {
             resetAutoCommitQuietly(c, oldAutoCommit);
         }
+        return null;
     }
 
     // ===================== DELETE =====================
